@@ -1,0 +1,22 @@
+{
+  "name": "nc-mcp-server",
+  "version": "2.1.0",
+  "description": "MCP Server for N-central REST API — exposes all GET endpoints as MCP tools with org hierarchy resources and workflow prompts.",
+  "type": "module",
+  "private": true,
+  "main": "index.js",
+  "bin": {
+    "nc-mcp-server": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "start:http": "MCP_PORT=3100 node index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  }
+}
