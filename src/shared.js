@@ -3,7 +3,10 @@
 export const paginationParams = {
   pageNumber: { type: 'number', description: 'Page number (starts at 1)' },
   pageSize: { type: 'number', description: 'Number of items per page (max 200)' },
-  select: { type: 'string', description: 'Field selection (comma-separated field names)' },
+  select: {
+    type: 'string',
+    description: 'Filter expression (FIQL/RSQL predicate) — despite the "select" name, this filters rows, it does NOT pick fields. Syntax: `field==value`, join predicates with `;` for AND. Example: `soId==50` returns only the SO with that ID. Not all fields are queryable; unsupported ones error with "Field not found: X".',
+  },
   sortBy: { type: 'string', description: 'Field to sort results by' },
   sortOrder: {
     type: 'string',
