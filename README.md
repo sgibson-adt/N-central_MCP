@@ -140,7 +140,7 @@ Each tool is tagged with its required write mode:
 
 Every `list_*` tool returns a single page by default (with pagination metadata: `pageNumber`, `pageSize`, `totalItems`, `totalPages`, `_links`). To retrieve every result across all pages in one call, pass `all: true` — the server will auto-paginate at 200 items per page (up to 40,000 items). For CSV/JSON exports over large datasets, use the matching `report_*` tool instead.
 
-### Devices (13)
+### Devices (11)
 
 | Tool | Mode | Description |
 |------|------|-------------|
@@ -150,8 +150,6 @@ Every `list_*` tool returns a single page by default (with pagination metadata: 
 | `get_device_status` | 🟢 | Get service monitoring status for a device |
 | `get_device_assets` | 🟢 | Get hardware/software asset info for a device |
 | `get_device_lifecycle` | 🟢 | Get warranty/lifecycle info for a device |
-| `get_device_activation_key` | 🟢 | Generate an agent activation key |
-| `get_maintenance_windows` | 🟢 | Get all maintenance windows for a device |
 | `get_appliance_task` | 🟢 | Get appliance task info by task ID |
 | `create_device` | 🟡 | Add a new device (customerId, networkAddress, longName, supportedOs, deviceClass required) |
 | `update_device_lifecycle` | 🟡 | PUT — replace asset lifecycle/warranty info (all fields required) |
@@ -170,21 +168,21 @@ Every `list_*` tool returns a single page by default (with pagination metadata: 
 | `get_site` | 🟢 | Get a specific site by ID |
 | `list_org_units` | 🟢 | List all organization units |
 | `get_org_unit` | 🟢 | Get a specific org unit by ID |
+| `get_org_unit_limits` | 🟢 | Get licensing/usage limits for an org unit |
 | `list_org_unit_children` | 🟢 | List child org units for a parent |
-| `get_psa_customer_mapping` | 🟢 | Get PSA customer mapping for a customer |
-| `get_registration_token` | 🟢 | Get agent registration token for a site/customer/org unit |
 | `create_service_org` | 🟡 | Create a new service organization |
 | `create_customer` | 🟡 | Create a new customer under a service org |
-| `create_site` | 🟡 | Create a new site under a customer |
+| `create_site` | 🟡 | Create a new site under a customer (PREVIEW) |
+| `update_org_unit_limits` | 🟡 | Update licensing/usage limits for an org unit (PATCH) |
 
-### Scheduled Tasks & Reports Access (5)
+### Scheduled Tasks (5)
 
 | Tool | Mode | Description |
 |------|------|-------------|
+| `list_scheduled_tasks` | 🟢 | List all scheduled tasks across the environment |
 | `get_scheduled_task` | 🟢 | Get general info for a scheduled task |
 | `get_scheduled_task_status` | 🟢 | Get aggregated or per-device task status |
 | `list_device_tasks` | 🟢 | List all scheduled tasks for a device |
-| `get_report` | 🟢 | Get a report by ID |
 | `create_direct_scheduled_task` | 🔴 | Run an Automation Policy / Script / MacScript on a device (direct support task) |
 
 ### Custom Properties (9)
@@ -201,16 +199,17 @@ Every `list_*` tool returns a single page by default (with pagination metadata: 
 | `update_org_unit_custom_property` | 🟡 | Update a custom property value on an org unit |
 | `update_org_custom_property_default` | 🟡 | Update the default value of an org-unit custom property (with propagation) |
 
-### Users & Access (9)
+### Users & Access (10)
 
 | Tool | Mode | Description |
 |------|------|-------------|
+| `list_all_users` | 🟢 | List all users in N-central (global, not scoped by org unit) |
+| `get_current_user` | 🟢 | Get details for the currently authenticated user |
 | `list_users` | 🟢 | List users for an org unit |
 | `list_user_roles` | 🟢 | List user roles for an org unit |
 | `get_user_role` | 🟢 | Get a specific user role |
 | `list_access_groups` | 🟢 | List access groups for an org unit |
 | `get_access_group` | 🟢 | Get a specific access group by ID |
-| `get_software_installers` | 🟢 | Get agent installer download URLs for a customer |
 | `create_user_role` | 🟡 | Create a new user role for an org unit (PREVIEW) |
 | `create_access_group` | 🟡 | Create a new org-unit-type access group |
 | `create_device_access_group` | 🟡 | Create a new device-type access group |
@@ -244,7 +243,7 @@ Every `list_*` tool returns a single page by default (with pagination metadata: 
 | `update_maintenance_windows` | 🟡 | Modify existing maintenance windows by ScheduleId |
 | `delete_maintenance_windows` | 🔴 | Delete maintenance windows by ScheduleIds |
 
-### PSA (9)
+### PSA (10)
 
 | Tool | Mode | Description |
 |------|------|-------------|
@@ -270,7 +269,7 @@ Every `list_*` tool returns a single page by default (with pagination metadata: 
 | `delete_device_note` | 🔴 | Delete a specific note on a device |
 | `clear_device_notes` | 🔴 | Delete ALL notes on a device |
 
-### Reports (9)
+### Reports (8)
 
 The cross-entity and bulk aggregate reports. For simple lists, use the matching `list_*` tool with `all: true` and `format: "csv"` — those auto-paginate and CSV-export too. Bulk reports use per-endpoint safe concurrency (3-5); override with `concurrency`.
 
@@ -279,10 +278,10 @@ The cross-entity and bulk aggregate reports. For simple lists, use the matching 
 | `report_devices_bulk` | 🟢 | Fan out a per-device call across an org unit — `dataType`: `custom-properties` / `assets` / `monitor-status`. CSV default. |
 | `report_all_users_by_so` | 🟢 | Deduplicated users across an SO and all its customers. CSV default. |
 | `report_devices_by_so` | 🟢 | All devices under a service org (filters across all devices). CSV default. |
-| `report_customer_site_summary` | 🟢 | Customers with sites, device counts, and active issue counts. CSV default. |
+| `report_customer_site_summary` | 🟢 | Customers with sites and device counts (per-site and customer totals). CSV default. |
 | `report_org_hierarchy` | 🟢 | Full SO → Customer → Site hierarchy flat table. CSV default. |
-| `list_active_issues` | 🟢 | All active issues for an org unit. JSON default. |
-| `list_job_statuses` | 🟢 | All job statuses for an org unit. JSON default. |
+| `list_active_issues` | 🟢 | All active issues for an org unit. CSV/JSON. |
+| `list_job_statuses` | 🟢 | All job statuses for an org unit. CSV/JSON. |
 | `generate_patch_comparison_report` | 🟡 | Submit a patch comparison report job (returns report ID) |
 
 ---
@@ -363,20 +362,29 @@ Resources provide live context to the client without requiring explicit tool cal
 ├── src/
 │   ├── auth.js               # JWT → Access Token auth, auto-refresh logic
 │   ├── client.js             # HTTP client with retry, timeout, and rate-limit handling
-│   ├── logging.js            # Structured logger
-│   ├── paginator.js          # Auto-pagination helper
+│   ├── logging.js            # Structured logger + audit log
+│   ├── metrics.js            # Prometheus counters / gauges
+│   ├── paginator.js          # Auto-pagination, bounded concurrency, CSV helpers
 │   ├── prompts.js            # MCP Prompts definitions
 │   ├── resources.js          # MCP Resources definitions
-│   ├── shared.js             # Shared pagination schema helpers
+│   ├── server-utils.js       # JSON-schema → Zod, header parsing, safeCompare
+│   ├── shared.js             # Shared pagination/format schema helpers
+│   ├── tool-registry.js      # Write-mode gating + MCP tool annotations
 │   └── tools/
 │       ├── custom-properties.js
 │       ├── devices.js
-│       ├── misc.js
+│       ├── maintenance-windows.js
+│       ├── notes.js
 │       ├── organizations.js
+│       ├── psa.js
+│       ├── registration.js
 │       ├── reports.js
 │       ├── scheduled-tasks.js
+│       ├── server-info.js
 │       └── users.js
 ├── test/
+│   ├── helpers.test.js
+│   ├── server-utils.test.js
 │   └── utils.test.js
 ├── .env.example
 ├── Dockerfile
