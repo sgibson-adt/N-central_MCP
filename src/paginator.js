@@ -17,7 +17,7 @@ export async function fetchAll(path, params = {}, pageSize = DEFAULT_PAGE_SIZE) 
   let page = 1;
 
   while (page <= MAX_PAGES) {
-    const res = await apiGet(path, { ...params, pageNumber: page, pageSize });
+    const res = /** @type {any} */ (await apiGet(path, { ...params, pageNumber: page, pageSize }));
     if (res == null) break;
 
     const items = Array.isArray(res) ? res : (res.data ?? []);

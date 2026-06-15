@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": true,
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": false,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "skipLibCheck": true
+  },
+  "include": ["index.js", "src/**/*.js"]
+}

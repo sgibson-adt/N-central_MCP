@@ -189,6 +189,7 @@ function createServer() {
   });
 
   for (const tool of allTools) {
+    /** @type {Record<string, any>} */
     const schemaShape = {};
     const properties = tool.inputSchema.properties || {};
     const required = tool.inputSchema.required || [];

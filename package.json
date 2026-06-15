@@ -14,7 +14,7 @@
     "start:http": "MCP_PORT=3100 node --env-file-if-exists=.env index.js",
     "test": "node --test test/*.test.js",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit --allowJs --checkJs --target esnext --module nodenext --moduleResolution nodenext --strict false --resolveJsonModule index.js src/**/*.js"
+    "type-check": "tsc -p tsconfig.json"
   },
   "engines": {
     "node": ">=22.9.0"
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/node": "^22.19.21",
     "eslint": "^10.4.0",
     "eslint-plugin-n": "^18.0.1",
     "globals": "^17.6.0",

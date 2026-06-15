@@ -10,10 +10,15 @@ const LEVEL = (process.env.MCP_AUDIT_LEVEL || 'sensitive').toLowerCase();
 
 const ROUTINE_EVENTS = new Set(['tool_call']);
 
+/**
+ * @param {string} event
+ * @param {Record<string, any>} [data]
+ */
 export function auditLog(event, data = {}) {
   if (LEVEL === 'off') return;
   if (LEVEL === 'sensitive' && ROUTINE_EVENTS.has(event)) return;
 
+  /** @type {Record<string, any>} */
   const entry = { timestamp: new Date().toISOString(), event, ...data };
   if (entry.args) entry.args = redact(entry.args);
   try {
