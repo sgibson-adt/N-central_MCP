@@ -147,7 +147,7 @@ function exchangeJwt(entry) {
       entry.tokenExpiry = Date.now() + TOKEN_LIFETIME_MS;
       if (!QUIET) console.error(`Authenticated with N-central at ${entry.fqdn}`);
     } catch (err) {
-      if (err.name === 'AbortError') throw new Error(`Auth timed out (${AUTH_TIMEOUT_MS}ms)`);
+      if (err.name === 'AbortError') throw new Error(`Auth timed out (${AUTH_TIMEOUT_MS}ms)`, { cause: err });
       throw err;
     } finally {
       clearTimeout(timer);

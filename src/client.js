@@ -84,7 +84,7 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
           await sleep(delay);
           continue;
         }
-        throw new Error(`Request timed out on ${method} ${stripQuery(path)}`);
+        throw new Error(`Request timed out on ${method} ${stripQuery(path)}`, { cause: err });
       }
       throw err;
     }
