@@ -17,12 +17,27 @@ const fixture = `
 ℹ all files         |  87.43 |    76.32 |   75.39 |
 `;
 
+const node22Fixture = `
+# file              | line % | branch % | funcs % | uncovered lines
+# index.js          |  92.13 |    46.15 |   71.43 |
+# src               |        |          |         |
+#  auth.js          |  85.43 |    45.16 |   69.23 |
+# all files         |  87.43 |    76.32 |   75.39 |
+`;
+
 describe('critical per-file coverage gate', () => {
   it('parses nested Node coverage rows without confusing duplicate basenames', () => {
     assert.deepEqual(parseCoverageTable(fixture), {
       'index.js': { lines: 92.13, branches: 46.15, functions: 71.43 },
       'src/auth.js': { lines: 85.43, branches: 45.16, functions: 69.23 },
       'src/tools/index.js': { lines: 100, branches: 100, functions: 100 },
+    });
+  });
+
+  it('parses TAP-comment-prefixed coverage rows emitted by Node 22', () => {
+    assert.deepEqual(parseCoverageTable(node22Fixture), {
+      'index.js': { lines: 92.13, branches: 46.15, functions: 71.43 },
+      'src/auth.js': { lines: 85.43, branches: 45.16, functions: 69.23 },
     });
   });
 

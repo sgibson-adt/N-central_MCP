@@ -24,7 +24,7 @@ export function parseCoverageTable(output) {
   let directories = [];
   for (const rawLine of output.split(/\r?\n/)) {
     const line = rawLine
-      .replace(/^\s*ℹ ?/, '');
+      .replace(/^\s*(?:ℹ|#) ?/, '');
     const columns = line.split('|');
     if (columns.length < 5) continue;
     const nameCell = columns[0];
