@@ -46,7 +46,16 @@ export function installMockFetch({ onAuth, dataHandler } = {}) {
     const headers = init.headers || {};
     const authHeader = headers.Authorization || headers.authorization || '';
     const bearer = String(authHeader).replace(/^Bearer\s+/i, '');
-    const call = { host: u.host, path: u.pathname, bearer, method: (init.method || 'GET').toUpperCase() };
+    const contentType = String(headers['Content-Type'] || headers['content-type'] || '');
+    const body = typeof init.body === 'string' ? init.body : null;
+    const call = {
+      host: u.host,
+      path: u.pathname,
+      bearer,
+      method: (init.method || 'GET').toUpperCase(),
+      contentType,
+      body,
+    };
     calls.push(call);
 
     if (u.pathname === '/api/auth/authenticate') {
@@ -54,7 +63,7 @@ export function installMockFetch({ onAuth, dataHandler } = {}) {
       return jsonResponse({ tokens: { access: { token: `acc:${bearer}` }, refresh: { token: `ref:${bearer}` } } });
     }
     if (u.pathname === '/api/auth/refresh') {
-      const jwt = bearer.replace(/^ref:/, '');
+      const jwt = String(body || bearer).replace(/^ref:/, '');
       return jsonResponse({ tokens: { access: { token: `acc:${jwt}` }, refresh: { token: `ref:${jwt}` } } });
     }
     if (dataHandler) {

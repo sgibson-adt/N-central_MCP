@@ -17,6 +17,9 @@ export async function listDeviceScheduledTasks(args) {
 
 /** @param {{taskId: string | number, includeStatus?: boolean, detailedStatus?: boolean}} args */
 export async function getScheduledTaskContext(args) {
+  if (args.detailedStatus && !args.includeStatus) {
+    throw new TypeError('detailedStatus requires includeStatus=true');
+  }
   const details = await getScheduledTask(args.taskId);
   const components = args.includeStatus ? [{
     name: 'status',

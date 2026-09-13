@@ -1,0 +1,192 @@
+{
+  "version": "3.0.0",
+  "tag": "v3.0.0",
+  "contract": {
+    "path": "test/openapi-spec.json",
+    "sha256": "051882a41b6e4f8b895abf85b46c3d90e90a88019b08ec5a8c6782aec6585640",
+    "openapiVersion": "3.0.1",
+    "title": "N-central API-Service",
+    "contractVersion": "1.0",
+    "pathCount": 84,
+    "operationCount": 104
+  },
+  "operationClosures": [
+    {
+      "operationKey": "GET /api/custom-psa/tickets",
+      "baselineStatus": "partially-implemented",
+      "resolution": "excluded",
+      "decision": "Treat the LinksResponse as navigation metadata and remove public list/search claims.",
+      "evidence": [
+        "test/contract/operations/psa.contract.test.js",
+        "test/contract/mcp/compatibility.contract.test.js"
+      ]
+    },
+    {
+      "operationKey": "GET /api/customers/{customerId}/registration-token",
+      "baselineStatus": "partially-implemented",
+      "resolution": "implemented",
+      "decision": "Preserve the customer identifier and disclose the preview lifecycle in discovery.",
+      "evidence": [
+        "test/contract/operations/users-registration.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ]
+    },
+    {
+      "operationKey": "GET /api/customers/{customerId}/sites",
+      "baselineStatus": "partially-implemented",
+      "resolution": "implemented",
+      "decision": "Honor the route pagination policy and disclose the preview lifecycle in discovery.",
+      "evidence": [
+        "test/contract/operations/organizations.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/notes",
+      "baselineStatus": "partially-implemented",
+      "resolution": "implemented",
+      "decision": "Expose bounded note pagination through device context and the compatibility mapping.",
+      "evidence": [
+        "test/contract/operations/devices.contract.test.js",
+        "test/contract/mcp/core-composition.contract.test.js"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/user-roles",
+      "baselineStatus": "partially-implemented",
+      "resolution": "implemented",
+      "decision": "Honor allow-all pagination and disclose the preview lifecycle in discovery.",
+      "evidence": [
+        "test/contract/operations/users-registration.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/user-roles/{userRoleId}",
+      "baselineStatus": "partially-implemented",
+      "resolution": "implemented",
+      "decision": "Preserve both path identifiers and disclose the preview lifecycle in discovery.",
+      "evidence": [
+        "test/contract/operations/users-registration.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ]
+    },
+    {
+      "operationKey": "GET /api/sites/{siteId}/registration-token",
+      "baselineStatus": "partially-implemented",
+      "resolution": "implemented",
+      "decision": "Preserve the site identifier and disclose the preview lifecycle in discovery.",
+      "evidence": [
+        "test/contract/operations/users-registration.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ]
+    }
+  ],
+  "acceptedUnsupportedOperations": [
+    "GET /api",
+    "GET /api/access-groups",
+    "GET /api/auth",
+    "GET /api/custom-psa",
+    "GET /api/custom-psa/tickets",
+    "GET /api/scheduled-tasks",
+    "GET /api/standard-psa",
+    "GET /api/standard-psa/customer-mapping/{customerId}",
+    "GET /api/users",
+    "POST /api/auth/logout",
+    "POST /api/auth/sso",
+    "POST /api/server-info/extra/authenticated"
+  ],
+  "defaultCatalog": [
+    "get_server_status",
+    "validate_session",
+    "get_current_user",
+    "search_organizations",
+    "get_organization_context",
+    "search_devices",
+    "get_device_context",
+    "list_active_issues",
+    "list_device_scheduled_tasks",
+    "get_scheduled_task_context",
+    "run_report",
+    "list_job_statuses"
+  ],
+  "migration": {
+    "legacyNameCount": 87,
+    "retained": 53,
+    "consolidated": 31,
+    "removed": 3
+  },
+  "provenance": {
+    "sourceUrl": {
+      "status": "unavailable",
+      "reason": "The source URL was not recorded when the maintainer supplied the contract."
+    },
+    "retrievedAt": {
+      "status": "unavailable",
+      "reason": "The upstream retrieval timestamp was not recorded with the supplied contract."
+    },
+    "productVersion": {
+      "status": "unavailable",
+      "reason": "The supplied OpenAPI document does not declare an N-central product version."
+    },
+    "repositoryReceipt": {
+      "status": "known",
+      "value": "2026-09-12"
+    }
+  },
+  "requiredGates": [
+    "contract-integrity",
+    "operation-closure",
+    "unsupported-review",
+    "preview-discovery",
+    "pagination-contract",
+    "core-catalog",
+    "compatibility",
+    "mcp-contracts",
+    "security",
+    "transport-parity",
+    "provenance",
+    "documentation",
+    "selection-quality",
+    "supported-platforms",
+    "static-quality",
+    "dependency-security",
+    "version-consistency",
+    "release-readiness"
+  ],
+  "deferredItems": [
+    {
+      "id": "additive-api-coverage",
+      "classification": "additive-3.x",
+      "rationale": "Newly justified capabilities may ship in later 3.x releases without changing the frozen contract."
+    },
+    {
+      "id": "sso-authentication",
+      "classification": "security-specification",
+      "rationale": "SSO requires a separately reviewed credential lifecycle and tenant-isolation design."
+    },
+    {
+      "id": "remote-logout",
+      "classification": "security-specification",
+      "rationale": "Remote logout requires separately defined local and upstream session semantics."
+    },
+    {
+      "id": "authenticated-server-information",
+      "classification": "security-specification",
+      "rationale": "Credential-bearing server information needs a separate secret-handling security review."
+    },
+    {
+      "id": "incompatible-contract-proposals",
+      "classification": "compatibility-design",
+      "rationale": "Future incompatible changes require a compatibility-preserving design or a later major release."
+    }
+  ],
+  "artifacts": {
+    "architectures": [
+      "linux/amd64",
+      "linux/arm64"
+    ],
+    "immutableDigestRequired": true,
+    "generatedReleaseNotes": true
+  }
+}

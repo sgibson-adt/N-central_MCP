@@ -29,6 +29,16 @@ function cell(value) {
   return String(value).replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
 }
 
+/** @param {{status: 'known', value: string} | {status: 'unavailable', reason: string}} fact */
+function provenanceCell(fact) {
+  if (!fact || typeof fact !== 'object') throw new Error('Coverage provenance facts must be structured');
+  if (fact.status === 'known' && fact.value?.trim()) return cell(fact.value);
+  if (fact.status === 'unavailable' && fact.reason?.trim()) {
+    return `Unavailable — ${cell(fact.reason)}`;
+  }
+  throw new Error('Coverage provenance facts must contain a value or an unavailable reason');
+}
+
 /** @param {string} value */
 function label(value) {
   return value.split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ');
@@ -69,9 +79,10 @@ const lines = [
   '',
   '| Provenance field | Reviewed value |',
   '|---|---|',
-  `| N-central product version | ${cell(manifest.source.productVersion)} |`,
-  `| Retrieved at | ${cell(manifest.source.retrievedAt)} |`,
-  `| Source URL | ${cell(manifest.source.sourceUrl)} |`,
+  `| N-central product version | ${provenanceCell(manifest.source.productVersion)} |`,
+  `| Retrieved at | ${provenanceCell(manifest.source.retrievedAt)} |`,
+  `| Source URL | ${provenanceCell(manifest.source.sourceUrl)} |`,
+  `| Received in repository | ${provenanceCell(manifest.source.repositoryReceipt)} |`,
   '',
   `**Comparable MCP definition baseline:** ${manifest.baseline.toolCount} tools; ${manifest.baseline.serializedDefinitionBytes.toLocaleString('en-US')} UTF-8 bytes for ordered \`{name,description,inputSchema}\` JSON definitions.`,
   '',

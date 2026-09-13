@@ -17,6 +17,17 @@ const pageProperties = {
   all: { type: 'boolean', description: 'Fetch bounded pages, up to 20 pages or 10,000 records.' },
 };
 
+const nameSearchProperties = {
+  name: {
+    type: 'string', minLength: 1, maxLength: 200,
+    description: 'Case-insensitive human-name search. Automatically scans bounded pages; do not combine with pageNumber or pageSize.',
+  },
+  nameMatch: {
+    type: 'string', enum: ['exact', 'contains'], default: 'contains',
+    description: 'Human-name matching mode; requires name.',
+  },
+};
+
 const metaSchema = {
   type: 'object',
   additionalProperties: false,
@@ -75,10 +86,11 @@ export const coreTools = Object.freeze([
   ),
   coreTool(
     'search_organizations',
-    'Find service organizations, customers, sites, or organization units with bounded filtering and pagination.',
+    'Find service organizations, customers, sites, or organization units by human name or bounded filtering and pagination. Customer-scoped site listing is PREVIEW and may change.',
     input({
       organizationType: { type: 'string', enum: ['service-org', 'customer', 'site', 'org-unit'], description: 'Organization kind to search.' },
       parentId: { type: ['string', 'number'], description: 'Service-org parent for customers or customer parent for sites.' },
+      ...nameSearchProperties,
       ...pageProperties,
     }, ['organizationType']),
     ['GET /api/service-orgs', 'GET /api/service-orgs/{soId}/customers', 'GET /api/customers', 'GET /api/customers/{customerId}/sites', 'GET /api/sites', 'GET /api/org-units'],
@@ -100,10 +112,11 @@ export const coreTools = Object.freeze([
   ),
   coreTool(
     'search_devices',
-    'Search the global or organization-scoped N-central device inventory with bounded filters and pagination.',
+    'Search the global or organization-scoped N-central device inventory by human name or bounded filters and pagination.',
     input({
       orgUnitId: { type: ['string', 'number'], description: 'Optional organization unit scope.' },
       filterId: { type: 'integer', description: 'Optional N-central device filter identifier.' },
+      ...nameSearchProperties,
       ...pageProperties,
     }),
     ['GET /api/devices', 'GET /api/org-units/{orgUnitId}/devices'], searchDevices,
@@ -115,11 +128,25 @@ export const coreTools = Object.freeze([
       deviceId: { type: ['string', 'number'], description: 'Device identifier.' },
       include: {
         type: 'array', uniqueItems: true,
-        items: { type: 'string', enum: ['details', 'monitoring', 'assets', 'lifecycle', 'notes', 'customProperties', 'tasks'] },
+        items: { type: 'string', enum: ['details', 'monitoring', 'assets', 'lifecycle', 'notes', 'customProperties', 'tasks', 'maintenanceWindows'] },
         description: 'Optional components; details are always the primary component.',
       },
+      noteOptions: {
+        type: 'object',
+        additionalProperties: false,
+        description: 'Pagination used only when notes are selected.',
+        properties: {
+          pageNumber: { type: 'integer', minimum: 1, description: 'Note page number, starting at 1.' },
+          pageSize: {
+            type: 'integer', minimum: -1, maximum: 1000,
+            anyOf: [{ const: -1 }, { minimum: 1, maximum: 1000 }],
+            description: 'Note page size: -1 or an integer from 1-1000.',
+          },
+          all: { type: 'boolean', description: 'Fetch bounded note pages.' },
+        },
+      },
     }, ['deviceId']),
-    ['GET /api/devices/{deviceId}', 'GET /api/devices/{deviceId}/service-monitor-status', 'GET /api/devices/{deviceId}/assets', 'GET /api/devices/{deviceId}/assets/lifecycle-info', 'GET /api/devices/{deviceId}/notes', 'GET /api/devices/{deviceId}/custom-properties', 'GET /api/devices/{deviceId}/scheduled-tasks'],
+    ['GET /api/devices/{deviceId}', 'GET /api/devices/{deviceId}/service-monitor-status', 'GET /api/devices/{deviceId}/assets', 'GET /api/devices/{deviceId}/assets/lifecycle-info', 'GET /api/devices/{deviceId}/notes', 'GET /api/devices/{deviceId}/custom-properties', 'GET /api/devices/{deviceId}/scheduled-tasks', 'GET /api/devices/{deviceId}/maintenance-windows'],
     getDeviceContext,
   ),
   coreTool(
@@ -127,10 +154,9 @@ export const coreTools = Object.freeze([
     'List current active monitoring issues for an organization unit with positive-only bounded pagination.',
     input({
       orgUnitId: { type: ['string', 'number'], description: 'Organization unit identifier.' },
-      severity: { type: 'string', description: 'Optional severity filter, combined into the select expression by callers.' },
       ...pageProperties,
       pageSize: { type: 'integer', minimum: 1, maximum: 1000, description: 'Positive active-issue page size from 1-1000.' },
-    }),
+    }, ['orgUnitId']),
     ['GET /api/org-units/{orgUnitId}/active-issues'], listActiveIssues,
   ),
   coreTool(

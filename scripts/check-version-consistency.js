@@ -14,13 +14,17 @@ function readJson(root, name, errors) {
   }
 }
 
-export function checkVersionConsistency({ root = process.cwd(), expectedVersion } = {}) {
+export function checkVersionConsistency({
+  root = process.cwd(),
+  expectedVersion,
+  serverMetadataPath = 'src/mcp-server.js',
+} = {}) {
   const errors = [];
   const pkg = readJson(root, 'package.json', errors);
   const lock = readJson(root, 'package-lock.json', errors);
-  let index = '';
-  try { index = readFileSync(resolve(root, 'index.js'), 'utf8'); }
-  catch { errors.push('index.js must be readable'); }
+  let serverMetadata = '';
+  try { serverMetadata = readFileSync(resolve(root, serverMetadataPath), 'utf8'); }
+  catch { errors.push(`${serverMetadataPath} must be readable`); }
 
   const version = typeof pkg?.version === 'string' ? pkg.version : null;
   if (pkg && !version) errors.push('package.json version must be a string');
@@ -29,7 +33,7 @@ export function checkVersionConsistency({ root = process.cwd(), expectedVersion 
   const locations = [
     ['package-lock.json version', lock?.version],
     ['package-lock.json root package version', lock?.packages?.['']?.version],
-    ['index.js server version', /\bversion\s*:\s*['"]([^'"]+)['"]/.exec(index)?.[1]],
+    [`${serverMetadataPath} server version`, /\bversion\s*:\s*['"]([^'"]+)['"]/.exec(serverMetadata)?.[1]],
   ];
   if (version) {
     for (const [label, found] of locations) {

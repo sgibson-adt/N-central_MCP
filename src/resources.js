@@ -1,17 +1,18 @@
 /** MCP Resources: read-only context. */
 
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { mapConcurrent } from './paginator.js';
 import { getContext } from './context.js';
+import { configuredNumber } from './config.js';
 import { getHealth, getServerInfo } from './operations/server-info.js';
 import { getDevice } from './operations/devices.js';
 import { getOrganization, searchOrganizations } from './operations/organizations.js';
+import { sanitizeToolError } from './tool-registry.js';
 
 export const RESOURCE_COUNT = 5;
 export const RESOURCE_OPERATION_REFERENCES = Object.freeze([
   'GET /api/service-orgs',
-  'GET /api/service-orgs/{soId}/customers',
-  'GET /api/customers/{customerId}/sites',
+  'GET /api/customers',
+  'GET /api/sites',
   'GET /api/health',
   'GET /api/server-info',
   'GET /api/devices/{deviceId}',
@@ -19,7 +20,7 @@ export const RESOURCE_OPERATION_REFERENCES = Object.freeze([
   'GET /api/org-units/{orgUnitId}',
 ]);
 
-const CACHE_TTL_MS = Number(process.env.NC_RESOURCE_CACHE_TTL_MS ?? 60_000);
+const CACHE_TTL_MS = configuredNumber('NC_RESOURCE_CACHE_TTL_MS', 60_000, { minimum: 0, integer: true });
 const cache = new Map();
 
 // Exported for isolation tests (verifies the cache key is tenant-scoped).
@@ -48,37 +49,77 @@ export function evictTenantCache(tenantKey) {
 export function registerResources(server) {
   server.resource(
     'org-tree', 'ncentral://org-tree',
-    { description: 'Full org hierarchy: Service Orgs → Customers → Sites with IDs and names.', mimeType: 'application/json' },
+    { description: 'Bounded org hierarchy: Service Orgs → Customers → Sites with IDs and names.', mimeType: 'application/json' },
     async () => {
-      const tree = await cached('ncentral://org-tree', async () => {
-        const serviceOrgs = /** @type {any[]} */ (await searchOrganizations('service-org', { all: true }));
+      const result = await cached('ncentral://org-tree', async () => {
+        const reads = await Promise.allSettled([
+          searchOrganizations('service-org', { all: true }),
+          searchOrganizations('customer', { all: true }),
+          searchOrganizations('site', { all: true }),
+        ]);
+        if (reads[0].status === 'rejected') throw reads[0].reason;
 
-        const soNodes = await mapConcurrent(serviceOrgs, async (so) => {
-          const soId = so.soId || so.id;
-          const customers = /** @type {any[]} */ (await searchOrganizations('customer', { parentId: soId, all: true }));
+        const errors = [];
+        const optional = (index, component) => {
+          if (reads[index].status === 'fulfilled') {
+            return Array.isArray(reads[index].value) ? reads[index].value : [];
+          }
+          errors.push({
+            component,
+            code: 'UPSTREAM_ERROR',
+            message: sanitizeToolError(reads[index].reason?.message),
+          });
+          return [];
+        };
+        const serviceOrgs = Array.isArray(reads[0].value) ? reads[0].value : [];
+        const customers = optional(1, 'customers');
+        const sites = optional(2, 'sites');
+        const customersByParent = Map.groupBy(customers, (customer) => String(customer.parentId ?? ''));
+        const sitesByParent = Map.groupBy(sites, (site) => String(site.parentId ?? ''));
+        const linkedCustomerIds = new Set();
+        const linkedSiteIds = new Set();
 
-          const customerNodes = await mapConcurrent(customers, async (cust) => {
-            const custId = cust.customerId || cust.id;
-            let sites = [];
-            try {
-              sites = /** @type {any[]} */ (await searchOrganizations('site', { parentId: custId, all: true }));
-            } catch (err) {
-              console.error(`Failed to fetch sites for customer ${custId}: ${err.message}`);
-            }
-            return {
-              customerId: custId,
-              customerName: cust.customerName || cust.name || '',
-              sites: sites.map(s => ({ siteId: s.siteId || s.id, siteName: s.siteName || s.name || '' })),
-            };
-          }, 5);
-
-          return { soId, soName: so.soName || so.name || '', customers: customerNodes };
-        }, 5);
-
-        return soNodes;
+        const tree = serviceOrgs.map((serviceOrg) => {
+          const soId = serviceOrg.soId ?? serviceOrg.id;
+          return {
+            soId,
+            soName: serviceOrg.soName ?? serviceOrg.name ?? '',
+            customers: (customersByParent.get(String(soId)) || []).map((customer) => {
+              const customerId = customer.customerId ?? customer.id;
+              linkedCustomerIds.add(String(customerId));
+              return {
+                customerId,
+                customerName: customer.customerName ?? customer.name ?? '',
+                sites: (sitesByParent.get(String(customerId)) || []).map((site) => {
+                  const siteId = site.siteId ?? site.id;
+                  linkedSiteIds.add(String(siteId));
+                  return { siteId, siteName: site.siteName ?? site.name ?? '' };
+                }),
+              };
+            }),
+          };
+        });
+        const inventory = {
+          serviceOrganizations: serviceOrgs.length,
+          customers: customers.length,
+          sites: sites.length,
+        };
+        const unlinked = {
+          customers: customers.filter((customer) => !linkedCustomerIds.has(String(customer.customerId ?? customer.id))).length,
+          sites: sites.filter((site) => !linkedSiteIds.has(String(site.siteId ?? site.id))).length,
+        };
+        return { tree, errors, inventory, unlinked };
       });
 
-      return { contents: [{ uri: 'ncentral://org-tree', mimeType: 'application/json', text: JSON.stringify(tree) }] };
+      return {
+        contents: [{ uri: 'ncentral://org-tree', mimeType: 'application/json', text: JSON.stringify(result.tree) }],
+        _meta: {
+          partial: result.errors.length > 0 || result.unlinked.customers > 0 || result.unlinked.sites > 0,
+          errors: result.errors,
+          inventory: result.inventory,
+          unlinked: result.unlinked,
+        },
+      };
     }
   );
 

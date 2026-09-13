@@ -29,4 +29,10 @@ describe('core MCP catalog', () => {
       assert.equal(typeof tool.handler, 'function', tool.name);
     }
   });
+
+  it('requires active-issue scope and advertises only implemented inputs', () => {
+    const activeIssues = coreTools.find(({ name }) => name === 'list_active_issues');
+    assert.ok(activeIssues.inputSchema.required.includes('orgUnitId'));
+    assert.equal(activeIssues.inputSchema.properties.severity, undefined);
+  });
 });

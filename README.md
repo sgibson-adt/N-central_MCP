@@ -11,7 +11,7 @@
 - **Focused 12-tool default catalog** for common read-only work, with opt-in `operations`, `administration`, `psa`, `reporting`, and deprecated `compatibility` toolsets
 - **Three write modes**: `read-only` (default), `write`, `full` — authority is intersected with selected toolsets, so visibility never grants writes by itself
 - **Structured results** with stable `data` and `meta` fields, readable text fallback, operation provenance, partial-error reporting, redaction, and bounded 256 KiB output
-- **Auto-paginated bulk reports** in CSV or JSON; per-endpoint concurrency caps tuned to N-central's documented limits
+- **Bounded report workflows** with safe auto-pagination; `run_report` supports JSON or CSV output
 - **MCP Resources** for live org-hierarchy context (`ncentral://org-tree`) and per-entity lookups via templated URIs
 - **MCP Prompts** for common audit and reporting workflows
 - **Two transports**: stdio (for Claude Desktop / local clients) and Streamable HTTP (for remote clients, MCP Inspector, etc.)
@@ -81,6 +81,19 @@ For example, `NC_TOOLSETS=core,reporting` remains read-only by default, while
 write/destructive tools are audit-logged. See [MCP Toolsets](docs/MCP-TOOLSETS.md) for exact current
 membership and [Migrating to 3.0](docs/MIGRATING-TO-3.0.md) for all 87 legacy-name dispositions.
 
+#### Upgrade from 2.x
+
+1. Keep the version 3 defaults (`NC_TOOLSETS=core`, `NC_WRITE_MODE=read-only`) for the twelve-tool
+   task-oriented catalog.
+2. If an existing integration still needs supported 2.x names, stage it with
+   `NC_TOOLSETS=core,compatibility`; add `NC_WRITE_MODE=write` or `full` only when that authority is
+   deliberately required.
+3. Review [Migrating to 3.0](docs/MIGRATING-TO-3.0.md) for all 87 names. In particular,
+   `list_custom_psa_tickets` is removed because the upstream route returns navigation links; use
+   `get_psa_ticket` with a known identifier.
+4. Run `node --test test/contract/mcp/compatibility.contract.test.js` before switching production
+   clients. This walkthrough is designed to take less than 15 minutes.
+
 ### 4. Start the server
 
 The server runs in **stdio mode** by default and switches to **HTTP mode** when `MCP_PORT` is set.
@@ -111,7 +124,7 @@ Or wire it into Claude Desktop directly. Add to `claude_desktop_config.json`:
 
 **Option B — Streamable HTTP (remote clients, MCP Inspector)**
 
-Set `MCP_PORT` in `.env` (default `3100`) and an `MCP_API_KEY`, then:
+Set an `MCP_API_KEY`, then use the HTTP script, which explicitly selects port `3100`:
 
 ```bash
 npm run start:http
@@ -119,6 +132,9 @@ npm run start:http
 # Health probe: http://127.0.0.1:3100/healthz
 # Metrics:      http://127.0.0.1:3100/metrics
 ```
+
+To use another port, start the server with `MCP_PORT=<port> npm start`. There is no HTTP port
+default in the runtime: an omitted `MCP_PORT` selects stdio.
 
 Clients send `Authorization: Bearer <MCP_API_KEY>` on every request.
 
@@ -135,8 +151,11 @@ Compose maps `127.0.0.1:3100:3100` by default. To expose on the LAN, edit `docke
 Versioned images are also published to GitHub Container Registry:
 
 ```bash
-docker pull ghcr.io/theonlytruebigmac/n-central-rest-api-mcp:3.0.0
+docker pull ghcr.io/theonlytruebigmac/n-central-rest-api-mcp:<released-version>
 ```
+
+Version 3.0.0 is currently an unreleased candidate; see [Release Readiness](docs/RELEASE-READINESS.md)
+for its exact scope and publication state.
 
 ### 5. Verify
 
@@ -146,6 +165,15 @@ docker pull ghcr.io/theonlytruebigmac/n-central-rest-api-mcp:3.0.0
 curl -s http://127.0.0.1:3100/healthz
 # {"status":"ok","sessions":0}
 ```
+
+Run deterministic and one-off credential-backed checks according to the
+[Verification Policy](docs/VERIFICATION.md). The live smoke command is explicitly opt-in,
+read-only, and emits no tenant response data. See [Updating the OpenAPI Baseline](docs/OPENAPI-UPDATE.md)
+before replacing the contract snapshot.
+
+HTTP sessions, token/cache entries, and rate-limit buckets are process-local. Deploy one instance,
+or use reliable session affinity for the full MCP session; round-robin session traffic across
+replicas is unsupported in version 3. See [Runtime Architecture](docs/ARCHITECTURE.md).
 
 ---
 
@@ -229,11 +257,24 @@ read-only tools:
 11. `run_report`
 12. `list_job_statuses`
 
-Optional catalogs contain 21 operations tools, 23 administration tools, 12 PSA tools, and 6
-reporting tools. The deprecated compatibility catalog exposes 85 safely retained or adapted 2.x
+Optional catalogs contain 21 operations tools, 23 administration tools, 11 PSA tools, and 6
+reporting tools. The deprecated compatibility catalog exposes 84 safely retained or adapted 2.x
 names. Counts are catalog memberships and are not additive when selected catalogs overlap. See the
 generated [MCP Toolsets](docs/MCP-TOOLSETS.md) reference for exact names, descriptions, scopes, and
 configuration examples.
+
+Both core inventory searches accept human names without requiring callers to construct
+endpoint-specific FIQL fields:
+
+```json
+{ "organizationType": "customer", "name": "Acme", "nameMatch": "contains" }
+{ "name": "Vienna Laptop", "nameMatch": "exact", "orgUnitId": 123 }
+```
+
+Name matching is case-insensitive and whitespace-normalized. It automatically scans bounded pages
+(at most 20 pages or 10,000 records), so `pageNumber` and `pageSize` cannot be combined with `name`.
+Advanced `select`, sort, parent, organization-unit, and device-filter inputs remain available as
+upstream pre-filters. Results include match mode, count, and retrieval bounds in `meta.page.search`.
 
 Every successful tool result has the same shape:
 
@@ -262,11 +303,11 @@ paging). Compositions use at most 10 upstream calls with concurrency capped at 5
 
 ### API coverage and limitations
 
-Against the reviewed 104-operation OpenAPI snapshot, 86 operations are fully implemented, 7 are
-verified but partially implemented, 5 are not implemented, and 6 navigation/SSO operations are
-intentionally excluded. The generated [API Coverage](docs/API-COVERAGE.md) report names every gap,
-exposure decision, capability mapping, and test-evidence path. This project does not claim complete
-REST parity where that report records a partial or missing operation.
+Against the reviewed 104-operation OpenAPI snapshot, 92 operations are implemented, none remains
+partially implemented, and 12 have reviewed unsupported dispositions. The generated
+[API Coverage](docs/API-COVERAGE.md) report names every exposure decision, capability mapping,
+limitation, safe alternative, and test-evidence path. This project does not claim one public tool
+per REST operation or support for the 12 reviewed exclusions.
 
 ---
 
@@ -276,7 +317,7 @@ Resources provide live context to the client without requiring explicit tool cal
 
 | URI | Description |
 |-----|-------------|
-| `ncentral://org-tree` | Full SO → Customer → Site hierarchy with IDs and names |
+| `ncentral://org-tree` | Bounded SO → Customer → Site hierarchy with IDs/names and partial/unlinked diagnostics |
 | `ncentral://status` | Server health + version snapshot |
 | `ncentral://device/{deviceId}` | Templated — full device record by ID |
 | `ncentral://customer/{customerId}` | Templated — customer details by ID |
@@ -302,7 +343,7 @@ Resources provide live context to the client without requiring explicit tool cal
 | Rate limits (429) | Auto-retry with exponential backoff on all methods (up to 3 attempts) |
 | Unauthorized (401) | Auto re-authenticates from JWT and replays the request on all methods |
 | Token expiry | Access tokens (1hr) and refresh tokens (25hr) auto-refreshed; concurrent refreshes coalesced |
-| Server errors (500/503) | Retried on GET/PUT/DELETE (idempotent). POST/PATCH fail fast to avoid duplicate writes |
+| Server errors (all 5xx) | Retried on GET/PUT/DELETE/HEAD (replay-safe). POST/PATCH fail fast to avoid duplicate writes |
 | Request timeouts | 30s on API calls, 15s on auth calls. Retried on idempotent methods only |
 | Stale HTTP sessions | Cleaned up after 30 minutes of inactivity |
 
@@ -310,17 +351,21 @@ Resources provide live context to the client without requiring explicit tool cal
 
 ## Known API Quirks
 
+- **Errors inside HTTP 200:** Some N-central failures arrive as an `error message` field in an otherwise successful HTTP response. The client rejects that field case-insensitively instead of returning it as valid data. See N-able's [known issues and limitations](https://developer.n-able.com/n-central/docs/rest-api-known-issues-and-limitations).
 - **Probe assets:** Return 404 — probes don't have asset records (expected behavior, skipped in bulk reports)
 - **Active issues:** `deviceClassValue` and `deviceClassLabel` are always `null` (known N-central API bug)
 - **`get_device` by ID:** `lastLoggedInUser` and `stillLoggedIn` may return `null` — use `list_devices` instead for these fields. (`lastApplianceCheckinTime` was also missing pre-v2025.3.1.9 — now fixed.)
 - **Active issues at SO level:** The `/active-issues` endpoint only supports customer/site org unit types, not service org
 - **Scheduled task `/details`:** does NOT accept DEVICE-level task IDs — only SYSTEM and CUSTOMER. Navigate via `parentId` if you have a device task ID.
+- **Scheduled-task root:** `GET /api/scheduled-tasks` is a link-discovery root, not a pageable global task list. Use a device's scheduled-task route to discover DEVICE-level IDs, then follow `parentId` when SYSTEM/CUSTOMER-level task information is required. N-able's [endpoint reference](https://developer.n-able.com/n-central/reference/taskroot) and [task FAQ](https://developer.n-able.com/n-central/docs/rest-api-faqs) agree with the OpenAPI/live response; the task overview's global-list wording is inconsistent.
 - **`create_direct_scheduled_task`:** Scripts must have Repository ID ≥ 2000 and "Enable API" toggled ON in the N-central UI. There's no API to enumerate scripts — find IDs in the Script/Software Repository UI. Extensive use accumulates DB rows that slow the UI's Task Execution page.
 - **`validate_psa_credential`:** only works with TigerPaw 3.0 — calls for other PSAs will fail.
+- **Standard PSA collection shapes:** Customer mappings, companies, contacts, and sites return `{ data: [...] }` envelopes on live systems even though the reviewed OpenAPI responses reference singular PSA models. The MCP preserves the upstream envelope.
 - **Per-endpoint concurrency limits:** N-central enforces concurrency per-endpoint (range 1-50). `/api/devices` allows 5 concurrent; `/api/devices/{id}/assets/lifecycle-info` only 1. Bulk reports default to safe values; tune via the `concurrency` parameter.
-- **PREVIEW endpoints:** `create_site` and `create_user_role` are flagged PREVIEW by N-central — the request/response shape may change between versions
-- **Credentialed POST endpoints:** `validate_psa_credential`, `get_custom_psa_ticket_detail`, and `get_server_info_authenticated` transmit plaintext credentials in request bodies — only use over HTTPS and be mindful of audit-log contents
+- **PREVIEW endpoints:** customer-scoped site listing/creation, customer/site registration tokens, and user-role listing/detail/creation are flagged PREVIEW by N-central. Every mapped tool warns during discovery because these contracts may change.
+- **Credentialed POST tools:** `validate_psa_credential` and the compatibility alias `get_custom_psa_ticket_detail` transmit plaintext credentials in request bodies — use them only over HTTPS. The credential-bearing authenticated server-information operation is intentionally not exposed.
 - **`select` is a filter, not a projection:** despite the name, the `select` query parameter on list endpoints is a **FIQL/RSQL predicate** that filters rows. It does NOT pick which fields come back. Valid: `select=soId==50` (returns only that SO). Invalid: `select=soId,soName` (parse error). Not all fields are queryable — unsupported ones error with `Field not found: X`. Some operators (e.g. `=gt=`) throw NPEs on the server.
+- **Device-create required fields:** The reviewed OpenAPI snapshot contains one malformed generated entry in `DeviceAddRequest.required`. `create_device` deliberately enforces the five valid required fields (`customerId`, `networkAddress`, `longName`, `supportedOs`, and `deviceClass`) and ignores only that invalid schema artifact.
 
 ---
 
@@ -334,7 +379,7 @@ Resources provide live context to the client without requiring explicit tool cal
 | Server restart loses authentication state | Tokens are stored in-memory only | First API call after restart triggers fresh JWT exchange — no action needed |
 | Can't reach the API on a custom port | N-central only serves the API on port 443 | Use a reverse proxy or accept port 443 |
 | `create_direct_scheduled_task` errors with no script found | Repository ID < 2000 (bundled default) or "Enable API" toggle is OFF | Use a custom-uploaded script; toggle "Enable API" in the UI |
-| Reaching `MAX_PAGES` errors on big environments | `fetchAll` caps at 200 pages × 200 items (40k rows) | Use a tighter filter via the `select` parameter, or call the underlying tool with explicit `pageNumber`/`pageSize` |
+| Reaching pagination bounds on big environments | Automatic pagination caps at 20 pages or 10,000 records | Use a tighter filter via the `select` parameter, or call the tool with explicit `pageNumber`/`pageSize` |
 | HTTP mode exits with "FATAL: MCP_PORT is set but MCP_API_KEY is not" | Safety check — HTTP mode requires an API key | Set `MCP_API_KEY=$(openssl rand -hex 32)` or `MCP_ALLOW_UNAUTHENTICATED=1` for local dev |
 | `ERR_CONNECTION_REFUSED` / can't reach `/healthz`/`/metrics` from another machine | Server bound or published to localhost only | Set `MCP_BIND_ADDRESS=0.0.0.0`; in Docker publish `0.0.0.0:3100:3100` (not `127.0.0.1:3100:3100`) and connect to the host's **LAN IP**, not `localhost`. If `curl 127.0.0.1:3100/healthz` works *on the host* but not remotely, it's the bind/publish scope |
 | Client connects but queries the **wrong** N-central / `X-NC-*` headers ignored | Server not started with `NC_MULTI_TENANT=1` | In single-tenant mode the headers are ignored and env `NC_SERVER_URL`/`NC_JWT_TOKEN` are used. Start with `NC_MULTI_TENANT=1` for header passthrough |
@@ -352,7 +397,12 @@ the tag to exactly match the package, lockfile, and MCP server version, runs the
 Linux AMD64 and ARM64 images, publishes them to GHCR, and then creates the corresponding GitHub
 Release.
 
-For version `3.0.0`:
+Version `3.0.0` metadata currently describes an unreleased candidate. Do not create its tag until
+the generated [Release Readiness](docs/RELEASE-READINESS.md) report is current, `npm run release:check`
+and the container smoke gate pass on the merged revision, and a maintainer explicitly approves
+publication.
+
+After those conditions are satisfied for version `3.0.0`:
 
 ```bash
 git tag -a v3.0.0 -m "Release v3.0.0"
@@ -393,8 +443,11 @@ The Copilot integration requires Spec Kit's explicit multi-install override when
 ├── src/
 │   ├── auth.js               # Per-tenant JWT → Access Token auth, auto-refresh logic
 │   ├── client.js             # HTTP client with retry, timeout, and rate-limit handling
+│   ├── config.js             # Shared bounded numeric environment parsing
 │   ├── context.js            # Per-request tenant context (AsyncLocalStorage) — credential isolation
+│   ├── http-runtime.js       # Streamable HTTP routing, rate limits, and session lifecycle
 │   ├── logging.js            # Structured logger + audit log
+│   ├── mcp-server.js         # Transport-independent MCP capability registration
 │   ├── metrics.js            # Prometheus counters / gauges
 │   ├── paginator.js          # Auto-pagination, bounded concurrency, CSV helpers
 │   ├── prompts.js            # MCP Prompts definitions
@@ -412,18 +465,32 @@ The Copilot integration requires Spec Kit's explicit multi-install override when
 │       ├── psa.js
 │       ├── reporting.js
 │       └── compatibility.js
+├── scripts/
+│   ├── check-critical-coverage.js # Aggregate and critical per-file coverage gate
+│   ├── live-readonly-smoke.js     # Explicit credential-backed read-only verification
+│   └── …                          # Generated-doc, evaluation, readiness, and version checks
 ├── test/
 │   ├── auth-isolation.test.js  # Per-tenant token/credential isolation (forced interleave, 401 path)
+│   ├── config.test.js          # Fail-fast numeric configuration contracts
+│   ├── critical-coverage.test.js # Per-file coverage parser and enforcement
 │   ├── isolation.test.js       # End-to-end session isolation, cache, boot matrix, SSRF guard
 │   ├── mock-fetch.js           # Shared test helpers (not a test suite)
+│   ├── repository-quality.test.js # Documentation, defaults, and repository hygiene
+│   ├── server-runtime.test.js  # Focused MCP/HTTP runtime behavior
 │   ├── helpers.test.js
 │   ├── server-utils.test.js
 │   └── utils.test.js
 ├── docs/
 │   ├── API-COVERAGE.md          # Generated 104-operation implementation/evidence ledger
+│   ├── ARCHITECTURE.md           # Runtime boundaries and supported deployment topology
+│   ├── DEPENDENCY-REVIEW.md      # Combined dependency and superseded-PR disposition record
+│   ├── MCP-EVALUATION.md         # Generated tool-selection quality report
 │   ├── MCP-TOOLSETS.md          # Generated exact catalog membership and scopes
 │   ├── MIGRATING-TO-3.0.md      # All 87 legacy-name dispositions
-│   └── SETUP-GUIDE.md           # Client setup how-to
+│   ├── OPENAPI-UPDATE.md         # Contract replacement and provenance procedure
+│   ├── RELEASE-READINESS.md      # Generated version-3 scope and gate reconciliation
+│   ├── SETUP-GUIDE.md           # Client setup how-to
+│   └── VERIFICATION.md          # Deterministic and guarded live verification policy
 ├── .env.example
 ├── Dockerfile
 └── docker-compose.yml

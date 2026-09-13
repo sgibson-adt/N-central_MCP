@@ -1,7 +1,7 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { installContractFetch, syntheticTenant, withSyntheticTenant } from '../fixtures.js';
+import { installContractFetch, jsonResponse, syntheticTenant, withSyntheticTenant } from '../fixtures.js';
 import {
   getDevice, getDeviceAssets, getDeviceLifecycle, getDeviceStatus, listDeviceNotes, searchDevices,
 } from '../../../src/operations/devices.js';
@@ -22,6 +22,37 @@ describe('device operation adapters', () => {
     assert.deepEqual(calls[1].query, { select: 'longName==workstation' });
   });
 
+  it('finds devices by human name across bounded pages while preserving upstream filters', async () => {
+    boundary = installContractFetch({ responder(call) {
+      if (call.path !== '/api/org-units/102/devices') return null;
+      return call.query.pageNumber === '1'
+        ? jsonResponse({
+          data: [
+            { deviceId: 1, longName: 'HP Laptop - Vienna' },
+            { deviceId: 2, longName: 'London Desktop' },
+          ],
+          totalPages: 2,
+        })
+        : jsonResponse({ data: [{ deviceId: 3, discoveredName: 'vienna-probe' }], totalPages: 2 });
+    } });
+
+    const matches = await withSyntheticTenant(syntheticTenant('device-name'), () => searchDevices({
+      orgUnitId: 102, name: '  VIENNA ', nameMatch: 'contains', select: 'customerId==102',
+      sortBy: 'longName', sortOrder: 'asc',
+    }));
+    assert.deepEqual(matches.map(({ deviceId }) => deviceId), [1, 3]);
+    const calls = boundary.calls.filter((call) => call.path === '/api/org-units/102/devices');
+    assert.deepEqual(calls.map(({ query }) => query), [
+      { pageNumber: '1', pageSize: '1000', select: 'customerId==102', sortBy: 'longName', sortOrder: 'asc' },
+      { pageNumber: '2', pageSize: '1000', select: 'customerId==102', sortBy: 'longName', sortOrder: 'asc' },
+    ]);
+
+    const callsBeforeInvalid = boundary.calls.length;
+    await assert.rejects(() => searchDevices({ nameMatch: 'exact' }), /nameMatch requires name/);
+    await assert.rejects(() => searchDevices({ name: 'Vienna', pageNumber: 2 }), /name search.*pageNumber/i);
+    assert.equal(boundary.calls.length, callsBeforeInvalid);
+  });
+
   it('routes device detail, status, assets, and lifecycle reads', async () => {
     boundary = installContractFetch();
     await withSyntheticTenant(syntheticTenant('device-detail'), async () => {
@@ -37,6 +68,28 @@ describe('device operation adapters', () => {
       '/api/devices/device-1/assets',
       '/api/devices/device-1/assets/lifecycle-info',
       '/api/devices/device-1/notes',
+    ]);
+  });
+
+  it('forwards valid note pagination unchanged and rejects invalid values before I/O', async () => {
+    boundary = installContractFetch({ responder(call) {
+      if (call.path.endsWith('/notes') && call.query.pageNumber) {
+        return jsonResponse({ data: [{ page: Number(call.query.pageNumber) }], totalPages: 2 });
+      }
+      return null;
+    } });
+    await withSyntheticTenant(syntheticTenant('device-notes'), async () => {
+      await listDeviceNotes('device-1', { pageNumber: 3, pageSize: -1 });
+      await listDeviceNotes('device-2', { all: true });
+      const callsBeforeInvalid = boundary.calls.length;
+      await assert.rejects(() => listDeviceNotes('device-1', { pageSize: 1001 }), /pageSize/);
+      assert.equal(boundary.calls.length, callsBeforeInvalid);
+    });
+    const noteCalls = boundary.calls.filter((call) => call.path.endsWith('/notes'));
+    assert.deepEqual(noteCalls[0].query, { pageNumber: '3', pageSize: '-1' });
+    assert.deepEqual(noteCalls.slice(1).map(({ query }) => query), [
+      { pageNumber: '1', pageSize: '1000' },
+      { pageNumber: '2', pageSize: '1000' },
     ]);
   });
 });

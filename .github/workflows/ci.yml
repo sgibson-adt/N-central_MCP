@@ -20,22 +20,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
-      - run: npm test
-      - name: Verify OpenAPI inventory and coverage manifest
-        run: npm run coverage:api:check
-      - name: Verify generated migration and toolset documentation
-        run: |
-          npm run migration:check
-          npm run toolsets:check
-      - name: Enforce catalog-size budget
-        run: node --test test/contract/mcp/catalog-size.contract.test.js
-      - name: Enforce selection evaluation and generated evidence
-        run: |
-          npm run test:evaluation
-          npm run evaluation:check
-      - run: npm run lint
-      - run: npm run type-check
-      - run: npm audit --audit-level=high
+      - name: Run aggregate release gate
+        run: npm run release:check
 
   container-smoke:
     runs-on: ubuntu-latest

@@ -2,9 +2,15 @@
 /** Contract-shaped organization read adapters. */
 
 import { apiGet, apiPatch, apiPost, sanitizePathParam } from '../client.js';
-import { fetchOrPaginate, PAGINATION_POLICIES } from '../shared.js';
+import { fetchOrPaginate, fetchOrSearchByName, PAGINATION_POLICIES } from '../shared.js';
 
 export const ORGANIZATION_TYPES = Object.freeze(['service-org', 'customer', 'site', 'org-unit']);
+const ORGANIZATION_NAME_FIELDS = Object.freeze({
+  'service-org': Object.freeze(['soName', 'name']),
+  customer: Object.freeze(['customerName', 'name']),
+  site: Object.freeze(['siteName', 'name']),
+  'org-unit': Object.freeze(['orgUnitName', 'name']),
+});
 
 /** @param {string} organizationType @param {Record<string, any>} [args] */
 export function searchOrganizations(organizationType, args = {}) {
@@ -17,7 +23,9 @@ export function searchOrganizations(organizationType, args = {}) {
     case 'org-unit': path = '/api/org-units'; break;
     default: throw new Error(`Unknown organizationType: ${organizationType}`);
   }
-  return fetchOrPaginate(path, {}, args, PAGINATION_POLICIES.allowAll);
+  return fetchOrSearchByName(
+    path, {}, args, ORGANIZATION_NAME_FIELDS[organizationType], PAGINATION_POLICIES.allowAll,
+  );
 }
 
 /** @param {string} organizationType @param {string | number} id */

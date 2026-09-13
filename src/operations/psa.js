@@ -3,7 +3,6 @@ import { apiGet, apiPost, apiPut, sanitizePathParam } from '../client.js';
 
 export const getPsaCustomerMapping = (customerId) => apiGet(`/api/standard-psa/customer/${sanitizePathParam(customerId)}/mappings`);
 export const validatePsaCredential = (psaType, body) => apiPost(`/api/standard-psa/${sanitizePathParam(psaType)}/credential`, body);
-export const searchPsaTickets = () => apiGet('/api/custom-psa/tickets');
 export const getPsaTicket = (ticketId, credentials = null) => credentials
   ? apiPost(`/api/custom-psa/tickets/${sanitizePathParam(ticketId)}`, credentials)
   : apiGet(`/api/custom-psa/tickets/${sanitizePathParam(ticketId)}`);

@@ -7,7 +7,7 @@ import { mapConcurrent } from '../paginator.js';
 import { getDeviceAssets, getDeviceStatus } from './devices.js';
 import { listDeviceCustomProperties } from './custom-properties.js';
 import { searchDevices } from './devices.js';
-import { searchOrganizations } from './organizations.js';
+import { getOrganization, searchOrganizations } from './organizations.js';
 import { listUsers } from './users.js';
 
 export function deduplicateUsers(perOrgUsers) {
@@ -65,7 +65,8 @@ export async function reportDevicesForOrg({ orgUnitId, dataType, concurrency }) 
 export async function reportAllUsersByServiceOrg({ soId }) {
   const customers = /** @type {any[]} */ (await searchOrganizations('customer', { parentId: soId, all: true }));
   const orgIds = [soId, ...customers.slice(0, 8).map((c) => c.customerId ?? c.id)];
-  return mapConcurrent(orgIds, (orgId) => listUsers(orgId, { all: true }), 5);
+  const perOrgUsers = await mapConcurrent(orgIds, (orgId) => listUsers(orgId, { all: true }), 5);
+  return deduplicateUsers(perOrgUsers);
 }
 
 export async function reportDevicesByServiceOrg({ soId }) {
@@ -77,7 +78,7 @@ export async function reportDevicesByServiceOrg({ soId }) {
 export async function reportCustomerSiteSummary({ customerId } = {}) {
   const customers = customerId == null
     ? /** @type {any[]} */ (await searchOrganizations('customer', { all: true }))
-    : [await searchOrganizations('customer', { select: `customerId==${customerId}` })];
+    : [await getOrganization('customer', customerId)];
   return mapConcurrent(customers.slice(0, 9), async (customer) => ({
     customer,
     sites: await searchOrganizations('site', { parentId: customer.customerId ?? customer.id, all: true }),
@@ -88,7 +89,7 @@ export async function reportCustomerSiteSummary({ customerId } = {}) {
 export async function reportOrgHierarchy({ soId } = {}) {
   const serviceOrgs = soId == null
     ? /** @type {any[]} */ (await searchOrganizations('service-org', { all: true }))
-    : /** @type {any[]} */ (await searchOrganizations('service-org', { select: `soId==${soId}` }));
+    : [await getOrganization('service-org', soId)];
   return mapConcurrent(serviceOrgs.slice(0, 9), async (serviceOrg) => ({
     serviceOrg,
     customers: await searchOrganizations('customer', { parentId: serviceOrg.soId ?? serviceOrg.id, all: true }),

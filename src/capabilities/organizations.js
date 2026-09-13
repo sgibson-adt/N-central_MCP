@@ -9,7 +9,7 @@ import {
   searchOrganizations as search,
 } from '../operations/organizations.js';
 import { createCapabilityResult } from '../tool-registry.js';
-import { composeOptional } from './common.js';
+import { composeOptional, nameSearchPage } from './common.js';
 
 /** @param {Record<string, any>} args */
 export async function searchOrganizations(args) {
@@ -20,7 +20,7 @@ export async function searchOrganizations(args) {
     : args.organizationType === 'site' && args.parentId != null ? '/api/customers/{customerId}/sites'
     : args.organizationType === 'site' ? '/api/sites'
     : '/api/org-units';
-  return createCapabilityResult(data, [`GET ${path}`]);
+  return createCapabilityResult(data, [`GET ${path}`], [], { page: nameSearchPage(args, data) });
 }
 
 /** @param {{orgUnitId: string | number, include?: string[]}} args */

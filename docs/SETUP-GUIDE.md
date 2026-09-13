@@ -47,9 +47,18 @@ text fallback. `meta` records contributing REST operations, pagination, partial 
 and truncation. Responses are bounded to 256 KiB; automatic paging and composed calls are bounded
 as documented in the [README](../README.md#pagination-and-composition-limits).
 
-The reviewed API snapshot contains 104 operations: 86 implemented, 7 verified partial, 5 missing,
-and 6 intentionally excluded. Consult [API Coverage](API-COVERAGE.md) for limitations before relying
-on an optional or compatibility capability.
+The reviewed API snapshot contains 104 operations: 92 implemented, none partially implemented, and
+12 with reviewed unsupported dispositions. Consult [API Coverage](API-COVERAGE.md) for limitations
+and safe alternatives before relying on an optional or compatibility capability.
+
+### Staging a 2.x migration
+
+Use `NC_TOOLSETS=core,compatibility` while migrating supported legacy names, and leave
+`NC_WRITE_MODE=read-only` unless a reviewed workflow needs more authority. The compatibility catalog
+contains 84 callable names from the 87-name inventory; the other three remain removed in every write
+mode. `list_custom_psa_tickets` is one of those removals because its upstream route returns only
+navigation links. Use `get_psa_ticket` with a known ticket ID. See
+[Migrating to 3.0](MIGRATING-TO-3.0.md) for every disposition.
 
 ---
 
@@ -74,10 +83,19 @@ Rules and gotchas:
 - **One session = one tenant.** Headers are read once when the session is created; a missing or
   invalid pair is rejected with `400` before the session exists.
 - **`NC_FQDN_ALLOWLIST`** on the server may restrict which hosts you're allowed to target.
-- **`/healthz` and `/metrics` are not** behind the gateway key (they're for probes/scrapers).
+- **`/healthz` is open.** `/metrics` is also open by default for scrapers, but setting
+  `MCP_METRICS_REQUIRE_AUTH=1` protects it with the same gateway key.
 
 A **single-tenant HTTP** client sends only the `Authorization` header — the FQDN/JWT come from the
 server's env.
+
+### Deployment topology
+
+MCP sessions, authentication tokens, resource caches, session activity, and rate-limit buckets are
+held in the server process. Use one HTTP replica, or configure reliable session affinity for each
+complete MCP session. Ordinary round-robin balancing is unsupported because another replica cannot
+resolve that session's in-memory tenant context. Rate limits and caches also remain per replica.
+See [Runtime Architecture](ARCHITECTURE.md) for the exact version 3 boundary.
 
 ---
 
@@ -89,10 +107,13 @@ password rotates every ~90 days, so regenerate the JWT proactively.
 
 ## 4. Server URL
 
+- The N-central server URL is validated at startup in single-tenant mode: it must be a bare
+  `https://` origin with no credentials, path, query, or fragment.
 - Local server: `http://localhost:3100/mcp`
 - Remote server: `http://<host-or-ip>:3100/mcp` (e.g. `http://10.0.0.5:3100/mcp`) — **not**
   `localhost` unless the client runs on the same machine as the server.
-- The path is always **`/mcp`**. (`3100` is the default `MCP_PORT`.)
+- The path is always **`/mcp`**. The runtime uses stdio when `MCP_PORT` is absent;
+  `npm run start:http` and Docker Compose explicitly select port `3100`.
 
 ---
 
@@ -318,8 +339,9 @@ Each entry is its own process with its own credentials — fully isolated, no se
 - **Claude Code:** `/mcp` → the server shows ✓ with a tool count.
 - **VS Code:** **MCP: List Servers** → Running, tools listed.
 - **Anywhere:** `curl -s http://<host>:3100/healthz` → `{"status":"ok","sessions":N}`.
-- The **first tool call** triggers the N-central token exchange — a bad JWT/FQDN surfaces there in
-  single-tenant mode, or at connect (`400`) in multi-tenant mode.
+- The **first tool call** triggers the N-central token exchange. An invalid single-tenant server URL
+  fails at startup; a bad single-tenant JWT surfaces on the first API call. Invalid multi-tenant
+  target headers fail at connect (`400`).
 
 ---
 

@@ -30,9 +30,9 @@ test('coverage manifest validates and reconciles the reviewed audit', () => {
     ]),
   );
   assert.deepEqual(statusCounts, {
-    implemented: 86,
-    'partially-implemented': 7,
-    'not-implemented': 11,
+    implemented: 92,
+    'partially-implemented': 0,
+    'not-implemented': 12,
   });
 
   for (const record of manifest.operations) {
@@ -64,4 +64,17 @@ test('coverage and exposure summaries reconcile to 104 records', () => {
   const exposures = countBy('exposure');
   assert.equal(Object.values(statuses).reduce((sum, count) => sum + count, 0), 104);
   assert.equal(Object.values(exposures).reduce((sum, count) => sum + count, 0), 104);
+});
+
+test('every provenance fact is known or explicitly unavailable with a reason', () => {
+  const { source } = readJson(MANIFEST_PATH);
+  for (const field of ['sourceUrl', 'retrievedAt', 'productVersion', 'repositoryReceipt']) {
+    const fact = source[field];
+    assert.ok(fact && typeof fact === 'object', field);
+    if (fact.status === 'known') assert.ok(fact.value?.trim(), `${field}: value`);
+    else {
+      assert.equal(fact.status, 'unavailable', `${field}: status`);
+      assert.ok(fact.reason?.trim().length >= 10, `${field}: reason`);
+    }
+  }
 });

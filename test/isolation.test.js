@@ -240,7 +240,7 @@ function waitForHealth(port) {
 
 function cleanEnv(extra) {
   const base = { ...process.env };
-  for (const k of ['NC_SERVER_URL', 'NC_JWT_TOKEN', 'NC_MULTI_TENANT', 'MCP_PORT', 'MCP_API_KEY', 'NC_FQDN_ALLOWLIST']) {
+  for (const k of ['NC_SERVER_URL', 'NC_JWT_TOKEN', 'NC_MULTI_TENANT', 'MCP_PORT', 'MCP_API_KEY', 'NC_FQDN_ALLOWLIST', 'MCP_MAX_BODY_SIZE', 'MCP_RATE_LIMIT_WINDOW_MS', 'MCP_RATE_LIMIT_MAX', 'MCP_MAX_SESSIONS', 'MCP_SESSION_TTL_MS', 'NC_MAX_TENANTS', 'NC_MAX_RETRIES', 'NC_RETRY_DELAY_MS', 'NC_REQUEST_TIMEOUT_MS', 'NC_RESOURCE_CACHE_TTL_MS']) {
     delete base[k];
   }
   return { ...base, ...extra };
@@ -248,7 +248,7 @@ function cleanEnv(extra) {
 
 function runBoot(env, { readyRe, waitMs = 2500 } = {}) {
   const base = { ...process.env };
-  for (const k of ['NC_SERVER_URL', 'NC_JWT_TOKEN', 'NC_MULTI_TENANT', 'MCP_PORT', 'MCP_API_KEY', 'NC_FQDN_ALLOWLIST']) {
+  for (const k of ['NC_SERVER_URL', 'NC_JWT_TOKEN', 'NC_MULTI_TENANT', 'MCP_PORT', 'MCP_API_KEY', 'NC_FQDN_ALLOWLIST', 'MCP_MAX_BODY_SIZE', 'MCP_RATE_LIMIT_WINDOW_MS', 'MCP_RATE_LIMIT_MAX', 'MCP_MAX_SESSIONS', 'MCP_SESSION_TTL_MS', 'NC_MAX_TENANTS', 'NC_MAX_RETRIES', 'NC_RETRY_DELAY_MS', 'NC_REQUEST_TIMEOUT_MS', 'NC_RESOURCE_CACHE_TTL_MS']) {
     delete base[k];
   }
   return new Promise((resolve) => {
@@ -287,6 +287,14 @@ describe('boot matrix', () => {
     assert.match(stderr, /NC_SERVER_URL and NC_JWT_TOKEN .* are required/s);
   });
 
+  it('rejects an insecure or non-origin single-tenant server URL at startup', async () => {
+    for (const url of ['http://host.example.com', 'https://host.example.com/api', 'https://user:pass@host.example.com']) {
+      const { exitCode, stderr } = await runBoot({ NC_SERVER_URL: url, NC_JWT_TOKEN: 'a.b.c' });
+      assert.equal(exitCode, 1, url);
+      assert.match(stderr, /https|path|credentials/, url);
+    }
+  });
+
   it('boots multi-tenant over HTTP without env credentials', async () => {
     const port = await freePort();
     const { exitCode, stderr } = await runBoot(
@@ -295,6 +303,25 @@ describe('boot matrix', () => {
     );
     assert.equal(exitCode, null, `expected the server to keep running, exited with ${exitCode}\n${stderr}`);
     assert.match(stderr, /Multi-tenant mode/);
+  });
+
+  it('rejects every explicit invalid numeric setting with its setting name', async () => {
+    for (const [name, value] of [
+      ['MCP_PORT', '70000'],
+      ['MCP_MAX_SESSIONS', '1.5'],
+      ['NC_MAX_RETRIES', '-1'],
+      ['NC_REQUEST_TIMEOUT_MS', 'not-a-number'],
+      ['NC_RESOURCE_CACHE_TTL_MS', '-1'],
+    ]) {
+      const { exitCode, stderr } = await runBoot({
+        NC_MULTI_TENANT: '1',
+        MCP_PORT: '3100',
+        MCP_API_KEY: 'test-key',
+        [name]: value,
+      });
+      assert.equal(exitCode, 1, name);
+      assert.match(stderr, new RegExp(`Invalid ${name}`), name);
+    }
   });
 });
 
@@ -348,6 +375,14 @@ describe('real curated registry parity', () => {
         'get_organization_context', 'search_devices', 'get_device_context', 'list_active_issues',
         'list_device_scheduled_tasks', 'get_scheduled_task_context', 'run_report', 'list_job_statuses',
       ]);
+      const deviceContext = tools.tools.find(({ name }) => name === 'get_device_context');
+      const pageSizeSchema = deviceContext.inputSchema.properties.noteOptions.properties.pageSize;
+      assert.ok(pageSizeSchema.anyOf.some((alternative) => alternative.const === -1));
+      const invalid = await client.callTool({
+        name: 'get_device_context',
+        arguments: { deviceId: '1', include: ['notes'], noteOptions: { pageSize: 0 } },
+      });
+      assert.equal(invalid.isError, true);
       const result = await client.callTool({ name: 'validate_session', arguments: {} });
       assert.ok(result.structuredContent);
       assert.equal(result.isError, undefined);

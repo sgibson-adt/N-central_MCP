@@ -64,6 +64,17 @@ it('fully describes every unique tool/resource/prompt registration', () => {
   }
 });
 
+it('discloses PREVIEW for every tool mapped to a preview operation', () => {
+  const previewOperations = new Set(operationCoverage.operations
+    .filter(({ lifecycle }) => lifecycle === 'preview')
+    .map(({ operationKey }) => operationKey));
+  for (const definition of toolDefinitions) {
+    if (definition.operations.some((operation) => previewOperations.has(operation))) {
+      assert.match(definition.description, /PREVIEW/, definition.name);
+    }
+  }
+});
+
 it('publishes operation-shaped mutation inputs instead of opaque request bodies', () => {
   assert.equal(JSON.stringify(toolDefinitions).includes('Schema-shaped N-central request payload.'), false);
 
