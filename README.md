@@ -8,8 +8,9 @@
 
 ## Features at a Glance
 
-- **87 tools** covering devices, device notes, organizations, users, custom properties, scheduled tasks, PSA integrations, maintenance windows, and reporting — full coverage of the N-central REST API
-- **Three write modes**: `read-only`, `write` (default), `full` — controls which tools are exposed
+- **Focused 12-tool default catalog** for common read-only work, with opt-in `operations`, `administration`, `psa`, `reporting`, and deprecated `compatibility` toolsets
+- **Three write modes**: `read-only` (default), `write`, `full` — authority is intersected with selected toolsets, so visibility never grants writes by itself
+- **Structured results** with stable `data` and `meta` fields, readable text fallback, operation provenance, partial-error reporting, redaction, and bounded 256 KiB output
 - **Auto-paginated bulk reports** in CSV or JSON; per-endpoint concurrency caps tuned to N-central's documented limits
 - **MCP Resources** for live org-hierarchy context (`ncentral://org-tree`) and per-entity lookups via templated URIs
 - **MCP Prompts** for common audit and reporting workflows
@@ -55,7 +56,8 @@ The most common variables (full list in [.env.example](.env.example)):
 | `NC_JWT_TOKEN` | single-tenant | User-API JWT from the N-central UI. *Not* needed in multi-tenant mode |
 | `NC_MULTI_TENANT` | hosted mode | Set to `1` to require per-request `X-NC-FQDN`/`X-NC-JWT` headers (HTTP only). See [Multi-Tenant Mode](#multi-tenant-hosted-mode) |
 | `NC_FQDN_ALLOWLIST` | multi-tenant | Comma-separated host suffixes a client may target — SSRF guard (exact or DNS-suffix match) |
-| `NC_WRITE_MODE` | optional | `read-only` \| `write` \| `full` (default `write`) |
+| `NC_TOOLSETS` | optional | Comma-separated catalogs; defaults to `core`. Valid names: `core`, `operations`, `administration`, `psa`, `reporting`, `compatibility` |
+| `NC_WRITE_MODE` | optional | `read-only` \| `write` \| `full` (default `read-only`) |
 | `MCP_PORT` | HTTP mode only | Setting this enables HTTP mode (omit for stdio) |
 | `MCP_API_KEY` | HTTP mode | Bearer token clients must present. Generate with `openssl rand -hex 32`. **Required** unless `MCP_ALLOW_UNAUTHENTICATED=1` |
 | `MCP_BIND_ADDRESS` | optional | Interface to bind. `127.0.0.1` (default) for localhost-only; `0.0.0.0` for Docker / LAN exposure |
@@ -63,15 +65,21 @@ The most common variables (full list in [.env.example](.env.example)):
 
 > **Connecting a client?** See the **[Setup & Client Guide](docs/SETUP-GUIDE.md)** for copy-paste config for Claude Code, VS Code, Claude Desktop, and Cursor — in both single- and multi-tenant modes.
 
-#### Write modes
+#### Toolsets and write modes
 
-| Mode | Tool count | Includes |
-|---|---|---|
-| `read-only` | 56 | GET endpoints only |
-| `write` *(default)* | 82 | Read tools + create/update tools (POST/PUT/PATCH) |
-| `full` | 87 | Everything, including destructive tools: `delete_device`, `delete_maintenance_windows`, `delete_device_note`, `clear_device_notes`, `create_direct_scheduled_task` |
+Omitting both settings advertises exactly the 12 `core` tools in `read-only` mode. Toolsets control
+relevance; write mode controls authority after the selected toolsets are combined.
 
-All write/destructive tools are audit-logged. Start in `read-only`, move to `write` once the integration is trusted, and reserve `full` for vetted automation.
+| Mode | Visible scopes |
+|---|---|
+| `read-only` *(default)* | read only |
+| `write` | read and non-destructive write |
+| `full` | read, write, and explicitly destructive |
+
+For example, `NC_TOOLSETS=core,reporting` remains read-only by default, while
+`NC_TOOLSETS=operations NC_WRITE_MODE=full` enables destructive operational workflows. All
+write/destructive tools are audit-logged. See [MCP Toolsets](docs/MCP-TOOLSETS.md) for exact current
+membership and [Migrating to 3.0](docs/MIGRATING-TO-3.0.md) for all 87 legacy-name dispositions.
 
 ### 4. Start the server
 
@@ -123,6 +131,12 @@ docker compose up -d
 ```
 
 Compose maps `127.0.0.1:3100:3100` by default. To expose on the LAN, edit `docker-compose.yml` and ensure `MCP_API_KEY` is set.
+
+Versioned images are also published to GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/theonlytruebigmac/n-central-rest-api-mcp:3.0.0
+```
 
 ### 5. Verify
 
@@ -199,159 +213,60 @@ session must return to the replica that created it.
 
 ## Tools
 
-Each tool is tagged with its required write mode:
+The default catalog is deliberately small. With no catalog configuration, clients discover these 12
+read-only tools:
 
-- 🟢 **read** — available in every mode
-- 🟡 **write** — requires `NC_WRITE_MODE=write` or `full`
-- 🔴 **destructive** — requires `NC_WRITE_MODE=full`
+1. `get_server_status`
+2. `validate_session`
+3. `get_current_user`
+4. `search_organizations`
+5. `get_organization_context`
+6. `search_devices`
+7. `get_device_context`
+8. `list_active_issues`
+9. `list_device_scheduled_tasks`
+10. `get_scheduled_task_context`
+11. `run_report`
+12. `list_job_statuses`
 
-### Pagination
+Optional catalogs contain 21 operations tools, 23 administration tools, 12 PSA tools, and 6
+reporting tools. The deprecated compatibility catalog exposes 85 safely retained or adapted 2.x
+names. Counts are catalog memberships and are not additive when selected catalogs overlap. See the
+generated [MCP Toolsets](docs/MCP-TOOLSETS.md) reference for exact names, descriptions, scopes, and
+configuration examples.
 
-Every `list_*` tool returns a single page by default (with pagination metadata: `pageNumber`, `pageSize`, `totalItems`, `totalPages`, `_links`). To retrieve every result across all pages in one call, pass `all: true` — the server will auto-paginate at 200 items per page (up to 40,000 items). For CSV/JSON exports over large datasets, use the matching `report_*` tool instead.
+Every successful tool result has the same shape:
 
-### Devices (11)
+```json
+{
+  "data": {},
+  "meta": {
+    "operations": ["GET /api/..."],
+    "partial": false,
+    "errors": [],
+    "page": null,
+    "truncated": false
+  }
+}
+```
 
-| Tool | Mode | Description |
-|------|------|-------------|
-| `list_devices` | 🟢 | List all devices with pagination, sorting, and filter support |
-| `list_devices_by_org_unit` | 🟢 | List devices under a specific org unit |
-| `get_device` | 🟢 | Get a device by ID |
-| `get_device_status` | 🟢 | Get service monitoring status for a device |
-| `get_device_assets` | 🟢 | Get hardware/software asset info for a device |
-| `get_device_lifecycle` | 🟢 | Get warranty/lifecycle info for a device |
-| `get_appliance_task` | 🟢 | Get appliance task info by task ID |
-| `create_device` | 🟡 | Add a new device (customerId, networkAddress, longName, supportedOs, deviceClass required) |
-| `update_device_lifecycle` | 🟡 | PUT — replace asset lifecycle/warranty info (all fields required) |
-| `patch_device_lifecycle` | 🟡 | PATCH — partially update asset lifecycle info |
-| `delete_device` | 🔴 | Delete a device by ID (optional `removeAgents`) |
+The same value is returned as MCP `structuredContent` and as a readable text fallback. Component
+failures can be reported as partial results; secrets and tenant URLs are redacted. Results are capped
+at 256 KiB.
 
-### Organizations (14)
+### Pagination and composition limits
 
-| Tool | Mode | Description |
-|------|------|-------------|
-| `list_service_orgs` | 🟢 | List all service organizations |
-| `get_service_org` | 🟢 | Get a specific service org by ID |
-| `list_customers` | 🟢 | List customers (all or filtered by SO) |
-| `get_customer` | 🟢 | Get a specific customer by ID |
-| `list_sites` | 🟢 | List sites (all or filtered by customer) |
-| `get_site` | 🟢 | Get a specific site by ID |
-| `list_org_units` | 🟢 | List all organization units |
-| `get_org_unit` | 🟢 | Get a specific org unit by ID |
-| `get_org_unit_limits` | 🟢 | Get licensing/usage limits for an org unit |
-| `list_org_unit_children` | 🟢 | List child org units for a parent |
-| `create_service_org` | 🟡 | Create a new service organization |
-| `create_customer` | 🟡 | Create a new customer under a service org |
-| `create_site` | 🟡 | Create a new site under a customer (PREVIEW) |
-| `update_org_unit_limits` | 🟡 | Update licensing/usage limits for an org unit (PATCH) |
+List calls return one page unless `all: true` is supported. Automatic pagination is bounded to 20
+pages and 10,000 records, with endpoint-specific page rules (including positive-only active-issue
+paging). Compositions use at most 10 upstream calls with concurrency capped at 5.
 
-### Scheduled Tasks (5)
+### API coverage and limitations
 
-| Tool | Mode | Description |
-|------|------|-------------|
-| `list_scheduled_tasks` | 🟢 | List all scheduled tasks across the environment |
-| `get_scheduled_task` | 🟢 | Get general info for a scheduled task |
-| `get_scheduled_task_status` | 🟢 | Get aggregated or per-device task status |
-| `list_device_tasks` | 🟢 | List all scheduled tasks for a device |
-| `create_direct_scheduled_task` | 🔴 | Run an Automation Policy / Script / MacScript on a device (direct support task) |
-
-### Custom Properties (9)
-
-| Tool | Mode | Description |
-|------|------|-------------|
-| `list_device_custom_properties` | 🟢 | List all custom properties for a device |
-| `get_device_custom_property` | 🟢 | Get a specific device custom property |
-| `get_device_default_custom_property` | 🟢 | Get default custom property for an org unit |
-| `list_org_custom_properties` | 🟢 | List custom properties for an org unit |
-| `get_org_unit_property` | 🟢 | Get a specific org unit custom property |
-| `get_org_custom_property_default` | 🟢 | Get default value for an org unit custom property |
-| `update_device_custom_property` | 🟡 | Update a custom property value on a device |
-| `update_org_unit_custom_property` | 🟡 | Update a custom property value on an org unit |
-| `update_org_custom_property_default` | 🟡 | Update the default value of an org-unit custom property (with propagation) |
-
-### Users & Access (10)
-
-| Tool | Mode | Description |
-|------|------|-------------|
-| `list_all_users` | 🟢 | List all users in N-central (global, not scoped by org unit) |
-| `get_current_user` | 🟢 | Get details for the currently authenticated user |
-| `list_users` | 🟢 | List users for an org unit |
-| `list_user_roles` | 🟢 | List user roles for an org unit |
-| `get_user_role` | 🟢 | Get a specific user role |
-| `list_access_groups` | 🟢 | List access groups for an org unit |
-| `get_access_group` | 🟢 | Get a specific access group by ID |
-| `create_user_role` | 🟡 | Create a new user role for an org unit (PREVIEW) |
-| `create_access_group` | 🟡 | Create a new org-unit-type access group |
-| `create_device_access_group` | 🟡 | Create a new device-type access group |
-
-### Server Info & Discovery (6)
-
-| Tool | Mode | Description |
-|------|------|-------------|
-| `get_server_info` | 🟢 | Server/API version info, health, or extended system details |
-| `get_server_time` | 🟢 | Current server time (useful for clock drift detection) |
-| `list_device_filters` | 🟢 | List all device filters |
-| `get_report` | 🟢 | Retrieve an N-central report by ID |
-| `get_server_info_authenticated` | 🟡 | Extra server version info using supplied credentials |
-| `logout` | 🟡 | Invalidate the current N-central API session |
-
-### Registration & Software (4)
-
-| Tool | Mode | Description |
-|------|------|-------------|
-| `get_registration_token` | 🟢 | Agent registration token for a site / customer / org unit |
-| `get_device_activation_key` | 🟢 | Generate an activation key for a device |
-| `get_software_installers` | 🟢 | List agent installer download URLs for a customer |
-| `generate_software_download_link` | 🟡 | Generate a software download link for a customer |
-
-### Maintenance Windows (4)
-
-| Tool | Mode | Description |
-|------|------|-------------|
-| `get_maintenance_windows` | 🟢 | List all maintenance windows for a device |
-| `create_maintenance_windows` | 🟡 | Add a set of patch maintenance windows to a list of devices |
-| `update_maintenance_windows` | 🟡 | Modify existing maintenance windows by ScheduleId |
-| `delete_maintenance_windows` | 🔴 | Delete maintenance windows by ScheduleIds |
-
-### PSA (10)
-
-| Tool | Mode | Description |
-|------|------|-------------|
-| `get_psa_customer_mapping` | 🟢 | Customer-mapping record by customer ID |
-| `list_psa_customer_mappings` | 🟢 | All PSA mappings for a customer |
-| `list_psa_companies` | 🟢 | Standard PSA companies for a customer |
-| `list_psa_company_contacts` | 🟢 | Contacts in a Standard PSA company |
-| `list_psa_company_sites` | 🟢 | Sites in a Standard PSA company |
-| `list_custom_psa_tickets` | 🟢 | List Custom PSA tickets |
-| `validate_psa_credential` | 🟡 | Validate Standard PSA credentials (TigerPaw 3.0 only) |
-| `get_custom_psa_ticket_detail` | 🟡 | Retrieve a Custom PSA ticket (POST — requires creds) |
-| `create_custom_psa_ticket` | 🟡 | Create a new Custom PSA ticket |
-| `update_psa_customer_mappings` | 🟡 | Update PSA mappings for a customer |
-
-### Device Notes (6)
-
-| Tool | Mode | Description |
-|------|------|-------------|
-| `list_device_notes` | 🟢 | List all notes attached to a device |
-| `add_device_note` | 🟡 | Add a note to a device |
-| `add_notes_bulk` | 🟡 | Add the same note to a list of devices |
-| `update_device_note` | 🟡 | Update an existing note on a device |
-| `delete_device_note` | 🔴 | Delete a specific note on a device |
-| `clear_device_notes` | 🔴 | Delete ALL notes on a device |
-
-### Reports (8)
-
-The cross-entity and bulk aggregate reports. For simple lists, use the matching `list_*` tool with `all: true` and `format: "csv"` — those auto-paginate and CSV-export too. Bulk reports use per-endpoint safe concurrency (3-5); override with `concurrency`.
-
-| Tool | Mode | Description |
-|------|------|-------------|
-| `report_devices_bulk` | 🟢 | Fan out a per-device call across an org unit — `dataType`: `custom-properties` / `assets` / `monitor-status`. CSV default. |
-| `report_all_users_by_so` | 🟢 | Deduplicated users across an SO and all its customers. CSV default. |
-| `report_devices_by_so` | 🟢 | All devices under a service org (filters across all devices). CSV default. |
-| `report_customer_site_summary` | 🟢 | Customers with sites and device counts (per-site and customer totals). CSV default. |
-| `report_org_hierarchy` | 🟢 | Full SO → Customer → Site hierarchy flat table. CSV default. |
-| `list_active_issues` | 🟢 | All active issues for an org unit. CSV/JSON. |
-| `list_job_statuses` | 🟢 | All job statuses for an org unit. CSV/JSON. |
-| `generate_patch_comparison_report` | 🟡 | Submit a patch comparison report job (returns report ID) |
+Against the reviewed 104-operation OpenAPI snapshot, 86 operations are fully implemented, 7 are
+verified but partially implemented, 5 are not implemented, and 6 navigation/SSO operations are
+intentionally excluded. The generated [API Coverage](docs/API-COVERAGE.md) report names every gap,
+exposure decision, capability mapping, and test-evidence path. This project does not claim complete
+REST parity where that report records a partial or missing operation.
 
 ---
 
@@ -430,6 +345,47 @@ For client-side setup issues, see the **[Setup & Client Guide](docs/SETUP-GUIDE.
 
 ---
 
+## Releases
+
+Pushing a stable semantic-version tag starts `.github/workflows/release.yml`. The workflow requires
+the tag to exactly match the package, lockfile, and MCP server version, runs the release gates, builds
+Linux AMD64 and ARM64 images, publishes them to GHCR, and then creates the corresponding GitHub
+Release.
+
+For version `3.0.0`:
+
+```bash
+git tag -a v3.0.0 -m "Release v3.0.0"
+git push origin v3.0.0
+```
+
+The container receives immutable `3.0.0` and moving `3.0`, `3`, and `latest` tags. The GitHub Release
+includes the pushed image digest. A mismatched or non-stable tag fails before anything is published.
+
+---
+
+## Spec-Driven Development
+
+This repository is initialized with [GitHub Spec Kit](https://github.com/github/spec-kit) for three coding-agent integrations. All three agents share the specifications and plans under `specs/` and the project-wide constitution under `.specify/memory/constitution.md`.
+
+| Agent | Project skills | How to start a workflow |
+|---|---|---|
+| Codex | `.agents/skills/` | Invoke `$speckit-constitution`, then `$speckit-specify` |
+| Claude Code | `.claude/skills/` | Invoke `/speckit-constitution`, then `/speckit-specify` |
+| GitHub Copilot | `.github/skills/` | In Agent mode, ask Copilot to use `speckit-constitution` or `speckit-specify` |
+
+Establish the constitution once. For each feature, use the shared workflow:
+
+```text
+constitution (once) -> specify -> clarify (optional) -> plan -> tasks -> analyze (optional) -> implement -> converge
+```
+
+Codex is the default Spec Kit integration. To make another installed integration the default for shared templates and any extensions or presets, run `specify integration use claude` or `specify integration use copilot`. Return to Codex with `specify integration use codex`.
+
+The Copilot integration requires Spec Kit's explicit multi-install override when it is installed alongside other agents. This repository has that supported setup recorded in `.specify/integration.json`; the three agent-specific skill directories do not overlap.
+
+---
+
 ## Project Structure
 
 ```
@@ -446,18 +402,16 @@ For client-side setup issues, see the **[Setup & Client Guide](docs/SETUP-GUIDE.
 │   ├── server-utils.js       # JSON-schema → Zod, header parsing, safeCompare
 │   ├── shared.js             # Shared pagination/format schema helpers
 │   ├── tool-registry.js      # Write-mode gating + MCP tool annotations
+│   ├── toolsets.js           # Deterministic catalog union + write-mode intersection
+│   ├── capabilities/         # Bounded, task-oriented compositions used by core tools
+│   ├── operations/           # Contract-shaped REST operation adapters
 │   └── tools/
-│       ├── custom-properties.js
-│       ├── devices.js
-│       ├── maintenance-windows.js
-│       ├── notes.js
-│       ├── organizations.js
+│       ├── core.js
+│       ├── operations.js
+│       ├── administration.js
 │       ├── psa.js
-│       ├── registration.js
-│       ├── reports.js
-│       ├── scheduled-tasks.js
-│       ├── server-info.js
-│       └── users.js
+│       ├── reporting.js
+│       └── compatibility.js
 ├── test/
 │   ├── auth-isolation.test.js  # Per-tenant token/credential isolation (forced interleave, 401 path)
 │   ├── isolation.test.js       # End-to-end session isolation, cache, boot matrix, SSRF guard
@@ -466,7 +420,10 @@ For client-side setup issues, see the **[Setup & Client Guide](docs/SETUP-GUIDE.
 │   ├── server-utils.test.js
 │   └── utils.test.js
 ├── docs/
-│   └── SETUP-GUIDE.md          # Client setup how-to (Claude Code, VS Code, Claude Desktop, Cursor)
+│   ├── API-COVERAGE.md          # Generated 104-operation implementation/evidence ledger
+│   ├── MCP-TOOLSETS.md          # Generated exact catalog membership and scopes
+│   ├── MIGRATING-TO-3.0.md      # All 87 legacy-name dispositions
+│   └── SETUP-GUIDE.md           # Client setup how-to
 ├── .env.example
 ├── Dockerfile
 └── docker-compose.yml

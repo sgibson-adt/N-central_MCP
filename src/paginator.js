@@ -5,8 +5,9 @@
 
 import { apiGet } from './client.js';
 
-const DEFAULT_PAGE_SIZE = 200;
-const MAX_PAGES = 200;
+export const DEFAULT_PAGE_SIZE = 1000;
+export const MAX_PAGES = 20;
+export const MAX_RECORDS = 10_000;
 
 /**
  * Auto-paginate through a list endpoint, returning all items.
@@ -21,10 +22,19 @@ export async function fetchAll(path, params = {}, pageSize = DEFAULT_PAGE_SIZE) 
     if (res == null) break;
 
     const items = Array.isArray(res) ? res : (res.data ?? []);
-    all.push(...items);
+    const remaining = MAX_RECORDS - all.length;
+    all.push(...items.slice(0, remaining));
+
+    if (items.length > remaining) {
+      throw new Error(`fetchAll: hit MAX_RECORDS (${MAX_RECORDS}) on ${path}. Use a tighter filter or paginate manually.`);
+    }
 
     const totalPages = res.totalPages ?? res._page?.totalPages ?? 1;
     if (page >= totalPages || items.length === 0) break;
+
+    if (all.length >= MAX_RECORDS) {
+      throw new Error(`fetchAll: hit MAX_RECORDS (${MAX_RECORDS}) on ${path} with more pages reported. Use a tighter filter or paginate manually.`);
+    }
 
     if (page === MAX_PAGES && page < totalPages) {
       throw new Error(`fetchAll: hit MAX_PAGES (${MAX_PAGES}) on ${path} with ${totalPages} pages reported. Use a tighter filter or paginate manually.`);

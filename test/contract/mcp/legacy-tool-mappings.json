@@ -1,0 +1,765 @@
+{
+  "baselineToolCount": 87,
+  "records": [
+    {
+      "legacyName": "add_device_note",
+      "disposition": "retained",
+      "replacement": "add_device_note",
+      "compatibilityTool": "add_device_note",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "add_notes_bulk",
+      "disposition": "retained",
+      "replacement": "add_notes_bulk",
+      "compatibilityTool": "add_notes_bulk",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "clear_device_notes",
+      "disposition": "consolidated",
+      "replacement": "delete_device_notes",
+      "compatibilityTool": "clear_device_notes",
+      "behaviorChanges": [
+        "Delegates to delete_device_notes; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_access_group",
+      "disposition": "retained",
+      "replacement": "create_access_group",
+      "compatibilityTool": "create_access_group",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_custom_psa_ticket",
+      "disposition": "consolidated",
+      "replacement": "create_psa_ticket",
+      "compatibilityTool": "create_custom_psa_ticket",
+      "behaviorChanges": [
+        "Delegates to create_psa_ticket; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_customer",
+      "disposition": "retained",
+      "replacement": "create_customer",
+      "compatibilityTool": "create_customer",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_device",
+      "disposition": "retained",
+      "replacement": "create_device",
+      "compatibilityTool": "create_device",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_device_access_group",
+      "disposition": "retained",
+      "replacement": "create_device_access_group",
+      "compatibilityTool": "create_device_access_group",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_direct_scheduled_task",
+      "disposition": "consolidated",
+      "replacement": "create_scheduled_task",
+      "compatibilityTool": "create_direct_scheduled_task",
+      "behaviorChanges": [
+        "Delegates to create_scheduled_task; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_maintenance_windows",
+      "disposition": "retained",
+      "replacement": "create_maintenance_windows",
+      "compatibilityTool": "create_maintenance_windows",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_service_org",
+      "disposition": "retained",
+      "replacement": "create_service_org",
+      "compatibilityTool": "create_service_org",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_site",
+      "disposition": "retained",
+      "replacement": "create_site",
+      "compatibilityTool": "create_site",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "create_user_role",
+      "disposition": "retained",
+      "replacement": "create_user_role",
+      "compatibilityTool": "create_user_role",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "delete_device",
+      "disposition": "retained",
+      "replacement": "delete_device",
+      "compatibilityTool": "delete_device",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "delete_device_note",
+      "disposition": "retained",
+      "replacement": "delete_device_note",
+      "compatibilityTool": "delete_device_note",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "delete_maintenance_windows",
+      "disposition": "retained",
+      "replacement": "delete_maintenance_windows",
+      "compatibilityTool": "delete_maintenance_windows",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "generate_patch_comparison_report",
+      "disposition": "retained",
+      "replacement": "generate_patch_comparison_report",
+      "compatibilityTool": "generate_patch_comparison_report",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "generate_software_download_link",
+      "disposition": "retained",
+      "replacement": "generate_software_download_link",
+      "compatibilityTool": "generate_software_download_link",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_access_group",
+      "disposition": "retained",
+      "replacement": "get_access_group",
+      "compatibilityTool": "get_access_group",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_appliance_task",
+      "disposition": "retained",
+      "replacement": "get_appliance_task",
+      "compatibilityTool": "get_appliance_task",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_current_user",
+      "disposition": "retained",
+      "replacement": "get_current_user",
+      "compatibilityTool": "get_current_user",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_custom_psa_ticket_detail",
+      "disposition": "consolidated",
+      "replacement": "get_psa_ticket",
+      "compatibilityTool": "get_custom_psa_ticket_detail",
+      "behaviorChanges": [
+        "Delegates to get_psa_ticket; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_customer",
+      "disposition": "consolidated",
+      "replacement": "get_organization_context",
+      "compatibilityTool": "get_customer",
+      "behaviorChanges": [
+        "Delegates to get_organization_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_device",
+      "disposition": "consolidated",
+      "replacement": "get_device_context",
+      "compatibilityTool": "get_device",
+      "behaviorChanges": [
+        "Delegates to get_device_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_device_activation_key",
+      "disposition": "retained",
+      "replacement": "get_device_activation_key",
+      "compatibilityTool": "get_device_activation_key",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_device_assets",
+      "disposition": "consolidated",
+      "replacement": "get_device_context",
+      "compatibilityTool": "get_device_assets",
+      "behaviorChanges": [
+        "Delegates to get_device_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_device_custom_property",
+      "disposition": "retained",
+      "replacement": "get_device_custom_property",
+      "compatibilityTool": "get_device_custom_property",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_device_default_custom_property",
+      "disposition": "retained",
+      "replacement": "get_device_default_custom_property",
+      "compatibilityTool": "get_device_default_custom_property",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_device_lifecycle",
+      "disposition": "consolidated",
+      "replacement": "get_device_context",
+      "compatibilityTool": "get_device_lifecycle",
+      "behaviorChanges": [
+        "Delegates to get_device_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_device_status",
+      "disposition": "consolidated",
+      "replacement": "get_device_context",
+      "compatibilityTool": "get_device_status",
+      "behaviorChanges": [
+        "Delegates to get_device_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_maintenance_windows",
+      "disposition": "consolidated",
+      "replacement": "get_device_context",
+      "compatibilityTool": "get_maintenance_windows",
+      "behaviorChanges": [
+        "Delegates to get_device_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_org_custom_property_default",
+      "disposition": "retained",
+      "replacement": "get_org_custom_property_default",
+      "compatibilityTool": "get_org_custom_property_default",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_org_unit",
+      "disposition": "consolidated",
+      "replacement": "get_organization_context",
+      "compatibilityTool": "get_org_unit",
+      "behaviorChanges": [
+        "Delegates to get_organization_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_org_unit_limits",
+      "disposition": "retained",
+      "replacement": "get_org_unit_limits",
+      "compatibilityTool": "get_org_unit_limits",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_org_unit_property",
+      "disposition": "retained",
+      "replacement": "get_org_unit_property",
+      "compatibilityTool": "get_org_unit_property",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_psa_customer_mapping",
+      "disposition": "retained",
+      "replacement": "get_psa_customer_mapping",
+      "compatibilityTool": "get_psa_customer_mapping",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_registration_token",
+      "disposition": "retained",
+      "replacement": "get_registration_token",
+      "compatibilityTool": "get_registration_token",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_report",
+      "disposition": "consolidated",
+      "replacement": "run_report",
+      "compatibilityTool": "get_report",
+      "behaviorChanges": [
+        "Delegates to run_report; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_scheduled_task",
+      "disposition": "consolidated",
+      "replacement": "get_scheduled_task_context",
+      "compatibilityTool": "get_scheduled_task",
+      "behaviorChanges": [
+        "Delegates to get_scheduled_task_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_scheduled_task_status",
+      "disposition": "consolidated",
+      "replacement": "get_scheduled_task_context",
+      "compatibilityTool": "get_scheduled_task_status",
+      "behaviorChanges": [
+        "Delegates to get_scheduled_task_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_server_info",
+      "disposition": "consolidated",
+      "replacement": "get_server_status",
+      "compatibilityTool": "get_server_info",
+      "behaviorChanges": [
+        "Delegates to get_server_status; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_server_info_authenticated",
+      "disposition": "removed",
+      "replacement": null,
+      "compatibilityTool": null,
+      "behaviorChanges": [],
+      "removalRationale": "No contract-accurate safe compatibility behavior is retained; use the documented curated catalogs."
+    },
+    {
+      "legacyName": "get_server_time",
+      "disposition": "consolidated",
+      "replacement": "get_server_status",
+      "compatibilityTool": "get_server_time",
+      "behaviorChanges": [
+        "Delegates to get_server_status; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_service_org",
+      "disposition": "consolidated",
+      "replacement": "get_organization_context",
+      "compatibilityTool": "get_service_org",
+      "behaviorChanges": [
+        "Delegates to get_organization_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_site",
+      "disposition": "consolidated",
+      "replacement": "get_organization_context",
+      "compatibilityTool": "get_site",
+      "behaviorChanges": [
+        "Delegates to get_organization_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_software_installers",
+      "disposition": "retained",
+      "replacement": "get_software_installers",
+      "compatibilityTool": "get_software_installers",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "get_user_role",
+      "disposition": "retained",
+      "replacement": "get_user_role",
+      "compatibilityTool": "get_user_role",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_access_groups",
+      "disposition": "retained",
+      "replacement": "list_access_groups",
+      "compatibilityTool": "list_access_groups",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_active_issues",
+      "disposition": "retained",
+      "replacement": "list_active_issues",
+      "compatibilityTool": "list_active_issues",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_all_users",
+      "disposition": "consolidated",
+      "replacement": "list_users",
+      "compatibilityTool": "list_all_users",
+      "behaviorChanges": [
+        "Delegates to list_users; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_custom_psa_tickets",
+      "disposition": "consolidated",
+      "replacement": "search_psa_tickets",
+      "compatibilityTool": "list_custom_psa_tickets",
+      "behaviorChanges": [
+        "Delegates to search_psa_tickets; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_customers",
+      "disposition": "consolidated",
+      "replacement": "search_organizations",
+      "compatibilityTool": "list_customers",
+      "behaviorChanges": [
+        "Delegates to search_organizations; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_device_custom_properties",
+      "disposition": "retained",
+      "replacement": "list_device_custom_properties",
+      "compatibilityTool": "list_device_custom_properties",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_device_filters",
+      "disposition": "retained",
+      "replacement": "list_device_filters",
+      "compatibilityTool": "list_device_filters",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_device_notes",
+      "disposition": "consolidated",
+      "replacement": "get_device_context",
+      "compatibilityTool": "list_device_notes",
+      "behaviorChanges": [
+        "Delegates to get_device_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_device_tasks",
+      "disposition": "consolidated",
+      "replacement": "list_device_scheduled_tasks",
+      "compatibilityTool": "list_device_tasks",
+      "behaviorChanges": [
+        "Delegates to list_device_scheduled_tasks; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_devices",
+      "disposition": "consolidated",
+      "replacement": "search_devices",
+      "compatibilityTool": "list_devices",
+      "behaviorChanges": [
+        "Delegates to search_devices; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_devices_by_org_unit",
+      "disposition": "consolidated",
+      "replacement": "search_devices",
+      "compatibilityTool": "list_devices_by_org_unit",
+      "behaviorChanges": [
+        "Delegates to search_devices; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_job_statuses",
+      "disposition": "retained",
+      "replacement": "list_job_statuses",
+      "compatibilityTool": "list_job_statuses",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_org_custom_properties",
+      "disposition": "retained",
+      "replacement": "list_org_custom_properties",
+      "compatibilityTool": "list_org_custom_properties",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_org_unit_children",
+      "disposition": "consolidated",
+      "replacement": "get_organization_context",
+      "compatibilityTool": "list_org_unit_children",
+      "behaviorChanges": [
+        "Delegates to get_organization_context; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_org_units",
+      "disposition": "consolidated",
+      "replacement": "search_organizations",
+      "compatibilityTool": "list_org_units",
+      "behaviorChanges": [
+        "Delegates to search_organizations; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_psa_companies",
+      "disposition": "retained",
+      "replacement": "list_psa_companies",
+      "compatibilityTool": "list_psa_companies",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_psa_company_contacts",
+      "disposition": "retained",
+      "replacement": "list_psa_company_contacts",
+      "compatibilityTool": "list_psa_company_contacts",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_psa_company_sites",
+      "disposition": "retained",
+      "replacement": "list_psa_company_sites",
+      "compatibilityTool": "list_psa_company_sites",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_psa_customer_mappings",
+      "disposition": "retained",
+      "replacement": "list_psa_customer_mappings",
+      "compatibilityTool": "list_psa_customer_mappings",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_scheduled_tasks",
+      "disposition": "consolidated",
+      "replacement": "list_device_scheduled_tasks",
+      "compatibilityTool": "list_scheduled_tasks",
+      "behaviorChanges": [
+        "Delegates to list_device_scheduled_tasks; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_service_orgs",
+      "disposition": "consolidated",
+      "replacement": "search_organizations",
+      "compatibilityTool": "list_service_orgs",
+      "behaviorChanges": [
+        "Delegates to search_organizations; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_sites",
+      "disposition": "consolidated",
+      "replacement": "search_organizations",
+      "compatibilityTool": "list_sites",
+      "behaviorChanges": [
+        "Delegates to search_organizations; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_user_roles",
+      "disposition": "retained",
+      "replacement": "list_user_roles",
+      "compatibilityTool": "list_user_roles",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "list_users",
+      "disposition": "retained",
+      "replacement": "list_users",
+      "compatibilityTool": "list_users",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "logout",
+      "disposition": "removed",
+      "replacement": null,
+      "compatibilityTool": null,
+      "behaviorChanges": [],
+      "removalRationale": "No contract-accurate safe compatibility behavior is retained; use the documented curated catalogs."
+    },
+    {
+      "legacyName": "patch_device_lifecycle",
+      "disposition": "retained",
+      "replacement": "patch_device_lifecycle",
+      "compatibilityTool": "patch_device_lifecycle",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "report_all_users_by_so",
+      "disposition": "consolidated",
+      "replacement": "report_all_users_by_service_org",
+      "compatibilityTool": "report_all_users_by_so",
+      "behaviorChanges": [
+        "Delegates to report_all_users_by_service_org; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "report_customer_site_summary",
+      "disposition": "retained",
+      "replacement": "report_customer_site_summary",
+      "compatibilityTool": "report_customer_site_summary",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "report_devices_bulk",
+      "disposition": "retained",
+      "replacement": "report_devices_bulk",
+      "compatibilityTool": "report_devices_bulk",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "report_devices_by_so",
+      "disposition": "consolidated",
+      "replacement": "report_devices_by_service_org",
+      "compatibilityTool": "report_devices_by_so",
+      "behaviorChanges": [
+        "Delegates to report_devices_by_service_org; inputs and results follow its curated contract."
+      ],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "report_org_hierarchy",
+      "disposition": "retained",
+      "replacement": "report_org_hierarchy",
+      "compatibilityTool": "report_org_hierarchy",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "update_device_custom_property",
+      "disposition": "retained",
+      "replacement": "update_device_custom_property",
+      "compatibilityTool": "update_device_custom_property",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "update_device_lifecycle",
+      "disposition": "retained",
+      "replacement": "update_device_lifecycle",
+      "compatibilityTool": "update_device_lifecycle",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "update_device_note",
+      "disposition": "retained",
+      "replacement": "update_device_note",
+      "compatibilityTool": "update_device_note",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "update_maintenance_windows",
+      "disposition": "retained",
+      "replacement": "update_maintenance_windows",
+      "compatibilityTool": "update_maintenance_windows",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "update_org_custom_property_default",
+      "disposition": "retained",
+      "replacement": "update_org_custom_property_default",
+      "compatibilityTool": "update_org_custom_property_default",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "update_org_unit_custom_property",
+      "disposition": "retained",
+      "replacement": "update_org_unit_custom_property",
+      "compatibilityTool": "update_org_unit_custom_property",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "update_org_unit_limits",
+      "disposition": "retained",
+      "replacement": "update_org_unit_limits",
+      "compatibilityTool": "update_org_unit_limits",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "update_psa_customer_mappings",
+      "disposition": "retained",
+      "replacement": "update_psa_customer_mappings",
+      "compatibilityTool": "update_psa_customer_mappings",
+      "behaviorChanges": [],
+      "removalRationale": null
+    },
+    {
+      "legacyName": "validate_psa_credential",
+      "disposition": "retained",
+      "replacement": "validate_psa_credential",
+      "compatibilityTool": "validate_psa_credential",
+      "behaviorChanges": [],
+      "removalRationale": null
+    }
+  ]
+}

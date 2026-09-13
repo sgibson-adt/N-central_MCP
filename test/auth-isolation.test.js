@@ -13,6 +13,8 @@ import { als, makeContext } from '../src/context.js';
 import { apiGet } from '../src/client.js';
 import { evictTenant, tenantCount } from '../src/auth.js';
 import { deferred, installMockFetch, assertProvenance } from './mock-fetch.js';
+import { createCapabilityResult, isSensitiveTool, toMcpResult } from '../src/tool-registry.js';
+import { coreTools } from '../src/tools/core.js';
 
 const ctxA = makeContext('https://a.example.com', 'jwtA');
 const ctxB = makeContext('https://b.example.com', 'jwtB');
@@ -158,5 +160,50 @@ describe('multi-tenant auth isolation', () => {
     } finally {
       auth.evictTenant(ctxA.key);
     }
+  });
+
+  it('refreshes an expired access token through the documented refresh route', async () => {
+    process.env.NC_ACCESS_EXPIRY = '1s';
+    const auth = await import('../src/auth.js?refresh-evidence=1');
+    delete process.env.NC_ACCESS_EXPIRY;
+    const originalNow = Date.now;
+    let now = originalNow();
+    Date.now = () => now;
+    active = installMockFetch();
+    try {
+      await auth.getAccessToken(ctxA);
+      now += 600;
+      await auth.getAccessToken(ctxA);
+      assert.equal(active.calls.filter((c) => c.path === '/api/auth/refresh').length, 1);
+    } finally {
+      Date.now = originalNow;
+      auth.evictTenant(ctxA.key);
+    }
+  });
+
+  it('keeps identical resource IDs isolated across tenants', async () => {
+    active = installMockFetch();
+    const [a, b] = await Promise.all([
+      als.run(ctxA, () => apiGet('/api/devices/42')),
+      als.run(ctxB, () => apiGet('/api/devices/42')),
+    ]);
+    assert.equal(a.host, 'a.example.com');
+    assert.equal(b.host, 'b.example.com');
+    assertProvenance(active.calls, hostToJwt);
+  });
+
+  it('classifies credential-bearing and mutating tools as sensitive', () => {
+    assert.equal(isSensitiveTool({ name: 'get_psa_ticket', writeScope: 'read' }), true);
+    assert.equal(isSensitiveTool({ name: 'create_device', writeScope: 'write' }), true);
+    assert.equal(isSensitiveTool({ name: 'search_devices', writeScope: 'read' }), false);
+  });
+
+  it('redacts tenant URLs and bearer material from structured component errors', () => {
+    const result = toMcpResult(coreTools[0], createCapabilityResult(null, ['GET /api/health'], [{
+      component: 'serverInfo', message: 'Bearer tenant-secret at https://a.example.com/api',
+    }]));
+    const serialized = JSON.stringify(result);
+    assert.equal(serialized.includes('tenant-secret'), false);
+    assert.equal(serialized.includes('a.example.com'), false);
   });
 });

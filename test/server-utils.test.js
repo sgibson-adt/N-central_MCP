@@ -64,6 +64,14 @@ describe('jsonSchemaToZod', () => {
     assert.equal(jsonSchemaToZod({ type: 'number' }).safeParse('x').success, false);
   });
 
+  it('preserves both minimum and maximum bounds', () => {
+    const schema = jsonSchemaToZod({ type: 'integer', minimum: 1, maximum: 1000 });
+    assert.equal(schema.safeParse(1).success, true);
+    assert.equal(schema.safeParse(1000).success, true);
+    assert.equal(schema.safeParse(0).success, false);
+    assert.equal(schema.safeParse(1001).success, false);
+  });
+
   it('maps "boolean" to z.boolean()', () => {
     assert.equal(jsonSchemaToZod({ type: 'boolean' }).safeParse(true).success, true);
     assert.equal(jsonSchemaToZod({ type: 'boolean' }).safeParse('true').success, false);
@@ -72,6 +80,13 @@ describe('jsonSchemaToZod', () => {
   it('maps "string" without enum to z.string()', () => {
     assert.equal(jsonSchemaToZod({ type: 'string' }).safeParse('hi').success, true);
     assert.equal(jsonSchemaToZod({ type: 'string' }).safeParse(42).success, false);
+  });
+
+  it('preserves string length and pattern constraints', () => {
+    const schema = jsonSchemaToZod({ type: 'string', minLength: 2, maxLength: 4, pattern: '^[A-Z]+$' });
+    assert.equal(schema.safeParse('AB').success, true);
+    assert.equal(schema.safeParse('a').success, false);
+    assert.equal(schema.safeParse('ABCDE').success, false);
   });
 
   it('maps "string" with enum to z.enum()', () => {
@@ -84,6 +99,13 @@ describe('jsonSchemaToZod', () => {
     const schema = jsonSchemaToZod({ type: 'array', items: { type: 'number' } });
     assert.equal(schema.safeParse([1, 2, 3]).success, true);
     assert.equal(schema.safeParse(['x']).success, false);
+  });
+
+  it('preserves array item-count constraints', () => {
+    const schema = jsonSchemaToZod({ type: 'array', minItems: 1, maxItems: 2, items: { type: 'string' } });
+    assert.equal(schema.safeParse(['a']).success, true);
+    assert.equal(schema.safeParse([]).success, false);
+    assert.equal(schema.safeParse(['a', 'b', 'c']).success, false);
   });
 
   it('maps "array" without items.type to z.array(z.string())', () => {

@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { sanitizePathParam } from '../src/client.js';
 import { toCsv } from '../src/paginator.js';
 import { auditLog } from '../src/logging.js';
-import { deduplicateUsers, buildDeviceCountByOrg } from '../src/tools/reports.js';
+import { deduplicateUsers, buildDeviceCountByOrg } from '../src/operations/reports.js';
 
 describe('sanitizePathParam', () => {
   it('accepts numeric IDs', () => {

@@ -1,0 +1,2634 @@
+{
+  "source": {
+    "path": "test/openapi-spec.json",
+    "sha256": "051882a41b6e4f8b895abf85b46c3d90e90a88019b08ec5a8c6782aec6585640",
+    "openapiVersion": "3.0.1",
+    "productVersion": null,
+    "retrievedAt": null,
+    "sourceUrl": null,
+    "operationCount": 104
+  },
+  "baseline": {
+    "toolCount": 87,
+    "serializedDefinitionBytes": 55858
+  },
+  "operations": [
+    {
+      "operationKey": "DELETE /api/devices/{deviceId}",
+      "method": "DELETE",
+      "path": "/api/devices/{deviceId}",
+      "operationId": "deleteDevice",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "delete_device"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/device-actions.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "DELETE /api/devices/{deviceId}/notes",
+      "method": "DELETE",
+      "path": "/api/devices/{deviceId}/notes",
+      "operationId": "deleteNoteBatch",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "delete_device_notes",
+        "clear_device_notes"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/notes.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/notes.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "DELETE /api/devices/{deviceId}/notes/{noteId}",
+      "method": "DELETE",
+      "path": "/api/devices/{deviceId}/notes/{noteId}",
+      "operationId": "deleteNote",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "delete_device_note"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/notes.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/notes.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "DELETE /api/devices/maintenance-windows",
+      "method": "DELETE",
+      "path": "/api/devices/maintenance-windows",
+      "operationId": "deleteMaintenanceWindowsByScheduleIds",
+      "tag": "Maintenance Windows",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "delete_maintenance_windows"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/tasks-maintenance.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/maintenance-windows.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api",
+      "method": "GET",
+      "path": "/api",
+      "operationId": "apiRoot",
+      "tag": "API-Service",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "excluded",
+      "exposure": "excluded",
+      "capabilities": [],
+      "gaps": [
+        "Intentionally excluded from REST adapter and MCP catalogs."
+      ],
+      "rationale": "REST navigation index; MCP discovery is the user-facing alternative.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep excluded from REST adapters and public MCP catalogs for this release.",
+      "safeAlternative": "Use MCP tool and resource discovery instead of the REST navigation index."
+    },
+    {
+      "operationKey": "GET /api/access-groups",
+      "method": "GET",
+      "path": "/api/access-groups",
+      "operationId": "accessGroupRoot",
+      "tag": "Access Groups",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "excluded",
+      "exposure": "excluded",
+      "capabilities": [],
+      "gaps": [
+        "Intentionally excluded from REST adapter and MCP catalogs."
+      ],
+      "rationale": "Access-group navigation index; administration discovery is the alternative.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep excluded from REST adapters and public MCP catalogs for this release.",
+      "safeAlternative": "Use the administration toolset access-group tools instead of the REST navigation index."
+    },
+    {
+      "operationKey": "GET /api/access-groups/{accessGroupId}",
+      "method": "GET",
+      "path": "/api/access-groups/{accessGroupId}",
+      "operationId": "getAccessGroup",
+      "tag": "Access Groups",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_access_group"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/appliance-tasks/{taskId}",
+      "method": "GET",
+      "path": "/api/appliance-tasks/{taskId}",
+      "operationId": "getApplianceTaskInformationDetails",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_appliance_task"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/device-actions.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/auth",
+      "method": "GET",
+      "path": "/api/auth",
+      "operationId": "authRoot",
+      "tag": "Authentication",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "excluded",
+      "exposure": "excluded",
+      "capabilities": [],
+      "gaps": [
+        "Intentionally excluded from REST adapter and MCP catalogs."
+      ],
+      "rationale": "Authentication navigation index; authenticated session capabilities are the alternative.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep excluded from REST adapters and public MCP catalogs for this release.",
+      "safeAlternative": "Use validate_session and the configured JWT authentication flow instead of the REST navigation index."
+    },
+    {
+      "operationKey": "GET /api/auth/validate",
+      "method": "GET",
+      "path": "/api/auth/validate",
+      "operationId": "validate",
+      "tag": "Authentication",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "composed-capability",
+      "capabilities": [
+        "validate_session"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/server.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/server-info.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/custom-psa",
+      "method": "GET",
+      "path": "/api/custom-psa",
+      "operationId": "customPsaRoot",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "excluded",
+      "exposure": "excluded",
+      "capabilities": [],
+      "gaps": [
+        "Intentionally excluded from REST adapter and MCP catalogs."
+      ],
+      "rationale": "Custom PSA navigation index; the PSA toolset is the alternative.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep excluded from REST adapters and public MCP catalogs for this release.",
+      "safeAlternative": "Use the PSA toolset instead of the REST navigation index."
+    },
+    {
+      "operationKey": "GET /api/custom-psa/tickets",
+      "method": "GET",
+      "path": "/api/custom-psa/tickets",
+      "operationId": "customPsaTicketsRoot",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "partially-implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "search_psa_tickets",
+        "list_custom_psa_tickets"
+      ],
+      "gaps": [
+        "OpenAPI describes a link index; the tool describes a list of tickets."
+      ],
+      "rationale": "OpenAPI describes a link index; the tool describes a list of tickets.",
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "The mapped capability is usable, but openAPI describes a link index; the tool describes a list of tickets.",
+      "intendedDisposition": "Retain the direct tool mapping with its partial status until the documented gap is resolved.",
+      "safeAlternative": "Use `search_psa_tickets`, `list_custom_psa_tickets` within the documented limitation."
+    },
+    {
+      "operationKey": "GET /api/custom-psa/tickets/{customPsaTicketId}",
+      "method": "GET",
+      "path": "/api/custom-psa/tickets/{customPsaTicketId}",
+      "operationId": "getCustomTicketInfoWithoutPsaCreds",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "composed-capability",
+      "capabilities": [
+        "get_psa_ticket",
+        "get_custom_psa_ticket_detail"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/customers",
+      "method": "GET",
+      "path": "/api/customers",
+      "operationId": "listCustomers_1",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "search_organizations",
+        "report_customer_site_summary",
+        "list_customers",
+        "list_org_units",
+        "list_service_orgs",
+        "list_sites"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/customers/{customerId}",
+      "method": "GET",
+      "path": "/api/customers/{customerId}",
+      "operationId": "getCustomer",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [],
+      "rationale": "A contract-shaped internal adapter is verified, but this operation is not directly exposed in the curated MCP catalogs.",
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this verified operation directly as a public MCP tool.",
+      "intendedDisposition": "Keep the verified adapter internal for bounded composition or infrastructure use.",
+      "safeAlternative": "Use search_organizations or get_organization_context for public organization context."
+    },
+    {
+      "operationKey": "GET /api/customers/{customerId}/registration-token",
+      "method": "GET",
+      "path": "/api/customers/{customerId}/registration-token",
+      "operationId": "getCustomerRegistrationToken",
+      "tag": "Registration Tokens",
+      "lifecycle": "preview",
+      "status": "partially-implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_registration_token"
+      ],
+      "gaps": [
+        "OpenAPI marks the operation PREVIEW; the combined tool does not disclose it."
+      ],
+      "rationale": "OpenAPI marks the operation PREVIEW; the combined tool does not disclose it.",
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/registration.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "The mapped capability is usable, but openAPI marks the operation PREVIEW; the combined tool does not disclose it.",
+      "intendedDisposition": "Retain the direct tool mapping with its partial status until the documented gap is resolved.",
+      "safeAlternative": "Use `get_registration_token` within the documented limitation."
+    },
+    {
+      "operationKey": "GET /api/customers/{customerId}/sites",
+      "method": "GET",
+      "path": "/api/customers/{customerId}/sites",
+      "operationId": "listSites_1",
+      "tag": "Organization Units",
+      "lifecycle": "preview",
+      "status": "partially-implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "search_organizations",
+        "report_customer_site_summary",
+        "list_customers",
+        "list_org_units",
+        "list_service_orgs",
+        "list_sites"
+      ],
+      "gaps": [
+        "Shared page-size mismatch; PREVIEW lifecycle is not disclosed."
+      ],
+      "rationale": "Shared page-size mismatch; PREVIEW lifecycle is not disclosed.",
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "The mapped capability is usable, but shared page-size mismatch; PREVIEW lifecycle is not disclosed.",
+      "intendedDisposition": "Retain the direct tool mapping with its partial status until the documented gap is resolved.",
+      "safeAlternative": "Use `search_organizations`, `report_customer_site_summary`, `list_customers`, `list_org_units`, `list_service_orgs`, `list_sites` within the documented limitation."
+    },
+    {
+      "operationKey": "GET /api/customers/{customerId}/software/installers",
+      "method": "GET",
+      "path": "/api/customers/{customerId}/software/installers",
+      "operationId": "getSoftwareDownloadPage",
+      "tag": "Software Installers",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_software_installers"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/registration.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/device-filters",
+      "method": "GET",
+      "path": "/api/device-filters",
+      "operationId": "listFilters",
+      "tag": "Device Filters",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "run_report",
+        "list_device_filters",
+        "get_report"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/monitoring-reports.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/server-info.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices",
+      "method": "GET",
+      "path": "/api/devices",
+      "operationId": "listDevices",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "search_devices",
+        "list_devices",
+        "list_devices_by_org_unit"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/devices.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}",
+      "operationId": "getDeviceById",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_context",
+        "get_device",
+        "get_device_assets",
+        "get_device_lifecycle",
+        "get_device_status",
+        "get_maintenance_windows",
+        "list_device_notes"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/devices.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/activation-key",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/activation-key",
+      "operationId": "generateActivationKey",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_activation_key"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/registration.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/assets",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/assets",
+      "operationId": "getAssetInfo",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_context",
+        "report_devices_bulk",
+        "get_device",
+        "get_device_assets",
+        "get_device_lifecycle",
+        "get_device_status",
+        "get_maintenance_windows",
+        "list_device_notes"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/devices.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/assets/lifecycle-info",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/assets/lifecycle-info",
+      "operationId": "getDeviceWarrantyInfo",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_context",
+        "get_device",
+        "get_device_assets",
+        "get_device_lifecycle",
+        "get_device_status",
+        "get_maintenance_windows",
+        "list_device_notes"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/device-actions.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/custom-properties",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/custom-properties",
+      "operationId": "listDeviceCustomProperties",
+      "tag": "Custom Properties",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_context",
+        "list_device_custom_properties",
+        "report_devices_bulk",
+        "get_device",
+        "get_device_assets",
+        "get_device_lifecycle",
+        "get_device_status",
+        "get_maintenance_windows",
+        "list_device_notes"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/custom-properties.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/custom-properties.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/custom-properties/{propertyId}",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/custom-properties/{propertyId}",
+      "operationId": "getDeviceCustomProperty",
+      "tag": "Custom Properties",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_custom_property"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/custom-properties.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/custom-properties.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/maintenance-windows",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/maintenance-windows",
+      "operationId": "getMaintenanceWindowsByDeviceId",
+      "tag": "Maintenance Windows",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [],
+      "rationale": "A contract-shaped internal adapter is verified, but this operation is not directly exposed in the curated MCP catalogs.",
+      "testEvidence": [
+        "test/contract/operations/tasks-maintenance.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/maintenance-windows.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this verified operation directly as a public MCP tool.",
+      "intendedDisposition": "Keep the verified adapter internal for bounded composition or infrastructure use.",
+      "safeAlternative": "Use get_device_context with the relevant device context includes."
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/notes",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/notes",
+      "operationId": "listNotes",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "partially-implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_context",
+        "get_device",
+        "get_device_assets",
+        "get_device_lifecycle",
+        "get_device_status",
+        "get_maintenance_windows",
+        "list_device_notes"
+      ],
+      "gaps": [
+        "Does not expose `pageNumber` or `pageSize`."
+      ],
+      "rationale": "Does not expose `pageNumber` or `pageSize`.",
+      "testEvidence": [
+        "test/contract/operations/notes.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/notes.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "The mapped capability is usable, but does not expose `pageNumber` or `pageSize`.",
+      "intendedDisposition": "Retain the direct tool mapping with its partial status until the documented gap is resolved.",
+      "safeAlternative": "Use `get_device_context`, `get_device`, `get_device_assets`, `get_device_lifecycle`, `get_device_status`, `get_maintenance_windows`, `list_device_notes` within the documented limitation."
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/remote-control-type",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/remote-control-type",
+      "operationId": "getRemoteControlType",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "composed-capability",
+      "capabilities": [
+        "get_remote_control_type"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/device-actions.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/scheduled-tasks",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/scheduled-tasks",
+      "operationId": "listTasksForDevice",
+      "tag": "Device Tasks",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_context",
+        "list_device_scheduled_tasks",
+        "get_device",
+        "get_device_assets",
+        "get_device_lifecycle",
+        "get_device_status",
+        "get_maintenance_windows",
+        "list_device_notes",
+        "list_device_tasks",
+        "list_scheduled_tasks"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/monitoring-reports.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/scheduled-tasks.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/devices/{deviceId}/service-monitor-status",
+      "method": "GET",
+      "path": "/api/devices/{deviceId}/service-monitor-status",
+      "operationId": "getDeviceStatus",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_context",
+        "report_devices_bulk",
+        "get_device",
+        "get_device_assets",
+        "get_device_lifecycle",
+        "get_device_status",
+        "get_maintenance_windows",
+        "list_device_notes"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/devices.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/health",
+      "method": "GET",
+      "path": "/api/health",
+      "operationId": "health",
+      "tag": "API-Service",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_server_status",
+        "get_server_info",
+        "get_server_time"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/server.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/server-info.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units",
+      "method": "GET",
+      "path": "/api/org-units",
+      "operationId": "listOrganizationUnits",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "search_organizations",
+        "list_customers",
+        "list_org_units",
+        "list_service_orgs",
+        "list_sites"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}",
+      "operationId": "getOrganizationUnit",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_organization_context",
+        "get_customer",
+        "get_org_unit",
+        "get_service_org",
+        "get_site",
+        "list_org_unit_children"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/access-groups",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/access-groups",
+      "operationId": "listAccessGroups",
+      "tag": "Access Groups",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "list_access_groups"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/active-issues",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/active-issues",
+      "operationId": "listActiveIssues",
+      "tag": "Active Issues",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "list_active_issues"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/monitoring-reports.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/reports.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/children",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/children",
+      "operationId": "listOrganizationUnitChildren",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_organization_context",
+        "get_customer",
+        "get_org_unit",
+        "get_service_org",
+        "get_site",
+        "list_org_unit_children"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/custom-properties",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/custom-properties",
+      "operationId": "listCustomerProperties",
+      "tag": "Custom Properties",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_organization_context",
+        "list_org_custom_properties",
+        "get_customer",
+        "get_org_unit",
+        "get_service_org",
+        "get_site",
+        "list_org_unit_children"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/custom-properties.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/custom-properties.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/custom-properties/{propertyId}",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/custom-properties/{propertyId}",
+      "operationId": "getOrganizationUnitProperty",
+      "tag": "Custom Properties",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_org_unit_property"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/custom-properties.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/custom-properties.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/custom-properties/device-custom-property-defaults/{propertyId}",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/custom-properties/device-custom-property-defaults/{propertyId}",
+      "operationId": "getDeviceDefaultCustomProperty",
+      "tag": "Custom Properties",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_device_default_custom_property"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/custom-properties.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/custom-properties.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/devices",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/devices",
+      "operationId": "listDevicesByOrgUnitId",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "search_devices",
+        "report_devices_bulk",
+        "report_devices_by_service_org",
+        "list_devices",
+        "list_devices_by_org_unit",
+        "report_devices_by_so"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/job-statuses",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/job-statuses",
+      "operationId": "listJobStatuses",
+      "tag": "Job Statuses",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "list_job_statuses"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/server.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/reports.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/limits",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/limits",
+      "operationId": "getCustomerLimits",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_organization_context",
+        "get_org_unit_limits",
+        "get_customer",
+        "get_org_unit",
+        "get_service_org",
+        "get_site",
+        "list_org_unit_children"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organization-admin.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/org-custom-property-defaults/{propertyId}",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/org-custom-property-defaults/{propertyId}",
+      "operationId": "getCustomProperty",
+      "tag": "Custom Properties",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_org_custom_property_default"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/custom-properties.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/custom-properties.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/registration-token",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/registration-token",
+      "operationId": "getOrganizationUnitRegistrationToken",
+      "tag": "Registration Tokens",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_registration_token"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/registration.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/user-roles",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/user-roles",
+      "operationId": "listUserRoles",
+      "tag": "User Roles",
+      "lifecycle": "preview",
+      "status": "partially-implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "list_user_roles"
+      ],
+      "gaps": [
+        "Shared page-size mismatch; PREVIEW lifecycle is not disclosed."
+      ],
+      "rationale": "Shared page-size mismatch; PREVIEW lifecycle is not disclosed.",
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "The mapped capability is usable, but shared page-size mismatch; PREVIEW lifecycle is not disclosed.",
+      "intendedDisposition": "Retain the direct tool mapping with its partial status until the documented gap is resolved.",
+      "safeAlternative": "Use `list_user_roles` within the documented limitation."
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/user-roles/{userRoleId}",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/user-roles/{userRoleId}",
+      "operationId": "getUserRole",
+      "tag": "User Roles",
+      "lifecycle": "preview",
+      "status": "partially-implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_user_role"
+      ],
+      "gaps": [
+        "OpenAPI marks the operation PREVIEW; MCP discovery does not."
+      ],
+      "rationale": "OpenAPI marks the operation PREVIEW; MCP discovery does not.",
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "The mapped capability is usable, but openAPI marks the operation PREVIEW; MCP discovery does not.",
+      "intendedDisposition": "Retain the direct tool mapping with its partial status until the documented gap is resolved.",
+      "safeAlternative": "Use `get_user_role` within the documented limitation."
+    },
+    {
+      "operationKey": "GET /api/org-units/{orgUnitId}/users",
+      "method": "GET",
+      "path": "/api/org-units/{orgUnitId}/users",
+      "operationId": "listUsers",
+      "tag": "Users",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "list_users",
+        "report_all_users_by_service_org",
+        "list_all_users",
+        "report_all_users_by_so"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/report/{reportId}",
+      "method": "GET",
+      "path": "/api/report/{reportId}",
+      "operationId": "getPatchComparisonReport",
+      "tag": "Patch Reports",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "run_report",
+        "get_report"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/monitoring-reports.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/server-info.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/scheduled-tasks",
+      "method": "GET",
+      "path": "/api/scheduled-tasks",
+      "operationId": "taskRoot",
+      "tag": "Scheduled Tasks",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "unverified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [
+        "The route is a navigation index and no contract-accurate global task-list adapter is currently exposed."
+      ],
+      "rationale": "The route is a navigation index and no contract-accurate global task-list adapter is currently exposed.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "src/operations/scheduled-tasks.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep unsupported and internal-only until a contract-accurate adapter is justified.",
+      "safeAlternative": "Use list_device_scheduled_tasks for device-scoped task discovery."
+    },
+    {
+      "operationKey": "GET /api/scheduled-tasks/{taskId}",
+      "method": "GET",
+      "path": "/api/scheduled-tasks/{taskId}",
+      "operationId": "getTask",
+      "tag": "Scheduled Tasks",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_scheduled_task_context",
+        "get_scheduled_task",
+        "get_scheduled_task_status"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/monitoring-reports.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/scheduled-tasks.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/scheduled-tasks/{taskId}/status",
+      "method": "GET",
+      "path": "/api/scheduled-tasks/{taskId}/status",
+      "operationId": "getTaskStatus",
+      "tag": "Scheduled Tasks",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_scheduled_task_context",
+        "get_scheduled_task",
+        "get_scheduled_task_status"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/monitoring-reports.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/scheduled-tasks.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/scheduled-tasks/{taskId}/status/details",
+      "method": "GET",
+      "path": "/api/scheduled-tasks/{taskId}/status/details",
+      "operationId": "listTaskStatusDetails",
+      "tag": "Scheduled Tasks",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_scheduled_task_context",
+        "get_scheduled_task",
+        "get_scheduled_task_status"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/monitoring-reports.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/scheduled-tasks.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/server-info",
+      "method": "GET",
+      "path": "/api/server-info",
+      "operationId": "apiRoot_1",
+      "tag": "API-Service",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_server_status",
+        "get_server_info",
+        "get_server_time"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/server.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/server-info.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/server-info/extra",
+      "method": "GET",
+      "path": "/api/server-info/extra",
+      "operationId": "apiExtra",
+      "tag": "API-Service",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [],
+      "rationale": "A contract-shaped internal adapter is verified, but this operation is not directly exposed in the curated MCP catalogs.",
+      "testEvidence": [
+        "test/contract/operations/server.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/server-info.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this verified operation directly as a public MCP tool.",
+      "intendedDisposition": "Keep the verified adapter internal for bounded composition or infrastructure use.",
+      "safeAlternative": "Use get_server_status for the supported public server summary."
+    },
+    {
+      "operationKey": "GET /api/server-info/time",
+      "method": "GET",
+      "path": "/api/server-info/time",
+      "operationId": "getServerTimeInfo",
+      "tag": "API-Service",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_server_status",
+        "get_server_info",
+        "get_server_time"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/server.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/server-info.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/service-orgs",
+      "method": "GET",
+      "path": "/api/service-orgs",
+      "operationId": "listServiceOrganizations",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "search_organizations",
+        "report_org_hierarchy",
+        "list_customers",
+        "list_org_units",
+        "list_service_orgs",
+        "list_sites"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/service-orgs/{soId}",
+      "method": "GET",
+      "path": "/api/service-orgs/{soId}",
+      "operationId": "getServiceOrganization",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [],
+      "rationale": "A contract-shaped internal adapter is verified, but this operation is not directly exposed in the curated MCP catalogs.",
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this verified operation directly as a public MCP tool.",
+      "intendedDisposition": "Keep the verified adapter internal for bounded composition or infrastructure use.",
+      "safeAlternative": "Use search_organizations or get_organization_context for public organization context."
+    },
+    {
+      "operationKey": "GET /api/service-orgs/{soId}/customers",
+      "method": "GET",
+      "path": "/api/service-orgs/{soId}/customers",
+      "operationId": "listCustomers",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "search_organizations",
+        "report_all_users_by_service_org",
+        "report_devices_by_service_org",
+        "report_org_hierarchy",
+        "list_customers",
+        "list_org_units",
+        "list_service_orgs",
+        "list_sites",
+        "report_all_users_by_so",
+        "report_devices_by_so"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/sites",
+      "method": "GET",
+      "path": "/api/sites",
+      "operationId": "listSites",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "search_organizations",
+        "list_customers",
+        "list_org_units",
+        "list_service_orgs",
+        "list_sites"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/sites/{siteId}",
+      "method": "GET",
+      "path": "/api/sites/{siteId}",
+      "operationId": "getSite",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [],
+      "rationale": "A contract-shaped internal adapter is verified, but this operation is not directly exposed in the curated MCP catalogs.",
+      "testEvidence": [
+        "test/contract/operations/organizations.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this verified operation directly as a public MCP tool.",
+      "intendedDisposition": "Keep the verified adapter internal for bounded composition or infrastructure use.",
+      "safeAlternative": "Use search_organizations or get_organization_context for public organization context."
+    },
+    {
+      "operationKey": "GET /api/sites/{siteId}/registration-token",
+      "method": "GET",
+      "path": "/api/sites/{siteId}/registration-token",
+      "operationId": "getSiteRegistrationToken",
+      "tag": "Registration Tokens",
+      "lifecycle": "preview",
+      "status": "partially-implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_registration_token"
+      ],
+      "gaps": [
+        "OpenAPI marks the operation PREVIEW; the combined tool does not disclose it."
+      ],
+      "rationale": "OpenAPI marks the operation PREVIEW; the combined tool does not disclose it.",
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/registration.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "The mapped capability is usable, but openAPI marks the operation PREVIEW; the combined tool does not disclose it.",
+      "intendedDisposition": "Retain the direct tool mapping with its partial status until the documented gap is resolved.",
+      "safeAlternative": "Use `get_registration_token` within the documented limitation."
+    },
+    {
+      "operationKey": "GET /api/standard-psa",
+      "method": "GET",
+      "path": "/api/standard-psa",
+      "operationId": "standardPsaRoot",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "excluded",
+      "exposure": "excluded",
+      "capabilities": [],
+      "gaps": [
+        "Intentionally excluded from REST adapter and MCP catalogs."
+      ],
+      "rationale": "Standard PSA navigation index; the PSA toolset is the alternative.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep excluded from REST adapters and public MCP catalogs for this release.",
+      "safeAlternative": "Use the PSA toolset instead of the REST navigation index."
+    },
+    {
+      "operationKey": "GET /api/standard-psa/customer-mapping/{customerId}",
+      "method": "GET",
+      "path": "/api/standard-psa/customer-mapping/{customerId}",
+      "operationId": "getCustomerMappingsDeprecated",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "unverified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [
+        "The deprecated route is not called; use the canonical customer mappings operation instead."
+      ],
+      "rationale": "The deprecated route is not called; use the canonical customer mappings operation instead.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep unsupported and internal-only until a contract-accurate adapter is justified.",
+      "safeAlternative": "Use get_psa_customer_mapping or list_psa_customer_mappings through the canonical mappings route."
+    },
+    {
+      "operationKey": "GET /api/standard-psa/customer/{customerId}/mappings",
+      "method": "GET",
+      "path": "/api/standard-psa/customer/{customerId}/mappings",
+      "operationId": "getCustomerMappings",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_psa_customer_mapping",
+        "list_psa_customer_mappings"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/standard-psa/customers/{customerId}/companies",
+      "method": "GET",
+      "path": "/api/standard-psa/customers/{customerId}/companies",
+      "operationId": "getPsaCompanies",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "list_psa_companies"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/standard-psa/customers/{customerId}/companies/{psaCompanyId}/contacts",
+      "method": "GET",
+      "path": "/api/standard-psa/customers/{customerId}/companies/{psaCompanyId}/contacts",
+      "operationId": "getPsaContacts",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "list_psa_company_contacts"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/standard-psa/customers/{customerId}/companies/{psaCompanyId}/sites",
+      "method": "GET",
+      "path": "/api/standard-psa/customers/{customerId}/companies/{psaCompanyId}/sites",
+      "operationId": "getPsaSites",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "list_psa_company_sites"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "GET /api/users",
+      "method": "GET",
+      "path": "/api/users",
+      "operationId": "userRoot",
+      "tag": "Users",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "unverified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [
+        "The route is a navigation index and no contract-accurate global user-list adapter is currently exposed."
+      ],
+      "rationale": "The route is a navigation index and no contract-accurate global user-list adapter is currently exposed.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep unsupported and internal-only until a contract-accurate adapter is justified.",
+      "safeAlternative": "Use list_users with an explicit organization-unit scope."
+    },
+    {
+      "operationKey": "GET /api/users/me",
+      "method": "GET",
+      "path": "/api/users/me",
+      "operationId": "getUserSelf",
+      "tag": "Users",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_current_user"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/server.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "PATCH /api/devices/{deviceId}/assets/lifecycle-info",
+      "method": "PATCH",
+      "path": "/api/devices/{deviceId}/assets/lifecycle-info",
+      "operationId": "patchAssetLifecycleInfo",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "patch_device_lifecycle"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/device-actions.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "PATCH /api/org-units/{orgUnitId}/limits",
+      "method": "PATCH",
+      "path": "/api/org-units/{orgUnitId}/limits",
+      "operationId": "updateCustomerLimits",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "update_org_unit_limits"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organization-admin.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "POST /api/auth/authenticate",
+      "method": "POST",
+      "path": "/api/auth/authenticate",
+      "operationId": "authenticate",
+      "tag": "Authentication",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [],
+      "rationale": "Internal authentication/session lifecycle behavior; not a model-invoked tool.",
+      "testEvidence": [
+        "test/contract/operations/server.contract.test.js",
+        "test/auth-isolation.test.js"
+      ],
+      "sourceEvidence": [
+        "src/auth.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this verified operation directly as a public MCP tool.",
+      "intendedDisposition": "Keep the verified adapter internal for bounded composition or infrastructure use.",
+      "safeAlternative": "Configure NC_JWT_TOKEN; authentication exchange remains an internal session concern."
+    },
+    {
+      "operationKey": "POST /api/auth/logout",
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "operationId": "logout",
+      "tag": "Authentication",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "unverified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [
+        "Logout was removed because no contract-accurate tenant-safe session behavior is currently retained."
+      ],
+      "rationale": "Logout was removed because no contract-accurate tenant-safe session behavior is currently retained.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "src/operations/server-info.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep unsupported and internal-only until a contract-accurate adapter is justified.",
+      "safeAlternative": "Close the MCP client session to release local tenant authentication state."
+    },
+    {
+      "operationKey": "POST /api/auth/refresh",
+      "method": "POST",
+      "path": "/api/auth/refresh",
+      "operationId": "refresh",
+      "tag": "Authentication",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [],
+      "rationale": "Internal authentication/session lifecycle behavior; not a model-invoked tool.",
+      "testEvidence": [
+        "test/auth-isolation.test.js"
+      ],
+      "sourceEvidence": [
+        "src/auth.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this verified operation directly as a public MCP tool.",
+      "intendedDisposition": "Keep the verified adapter internal for bounded composition or infrastructure use.",
+      "safeAlternative": "Use the managed session flow, which refreshes credentials internally when required."
+    },
+    {
+      "operationKey": "POST /api/auth/sso",
+      "method": "POST",
+      "path": "/api/auth/sso",
+      "operationId": "authenticateSso",
+      "tag": "Authentication",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "excluded",
+      "exposure": "excluded",
+      "capabilities": [],
+      "gaps": [
+        "Intentionally excluded from REST adapter and MCP catalogs."
+      ],
+      "rationale": "Separate SSO credential lifecycle is outside this feature and requires its own security specification.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep excluded from REST adapters and public MCP catalogs for this release.",
+      "safeAlternative": "Configure JWT authentication with NC_JWT_TOKEN; SSO requires a separate security design."
+    },
+    {
+      "operationKey": "POST /api/custom-psa/tickets",
+      "method": "POST",
+      "path": "/api/custom-psa/tickets",
+      "operationId": "createCustomTicket",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_psa_ticket",
+        "create_custom_psa_ticket"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json",
+        "src/tools/psa.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/custom-psa/tickets/{customPsaTicketId}",
+      "method": "POST",
+      "path": "/api/custom-psa/tickets/{customPsaTicketId}",
+      "operationId": "getCustomTicketInfo",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "get_psa_ticket",
+        "get_custom_psa_ticket_detail"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json",
+        "src/tools/psa.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/custom-psa/tickets/{customPsaTicketId}/reopen",
+      "method": "POST",
+      "path": "/api/custom-psa/tickets/{customPsaTicketId}/reopen",
+      "operationId": "reopenCustomTicket",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "composed-capability",
+      "capabilities": [
+        "reopen_psa_ticket"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json",
+        "src/tools/psa.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/custom-psa/tickets/{customPsaTicketId}/resolve",
+      "method": "POST",
+      "path": "/api/custom-psa/tickets/{customPsaTicketId}/resolve",
+      "operationId": "resolveCustomTicket",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "composed-capability",
+      "capabilities": [
+        "resolve_psa_ticket"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json",
+        "src/tools/psa.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/customers/{customerId}/sites",
+      "method": "POST",
+      "path": "/api/customers/{customerId}/sites",
+      "operationId": "createSite",
+      "tag": "Organization Units",
+      "lifecycle": "preview",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_site"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organization-admin.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json",
+        "src/tools/administration.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/customers/{customerId}/software/installers",
+      "method": "POST",
+      "path": "/api/customers/{customerId}/software/installers",
+      "operationId": "generateSoftwareDownloadLink",
+      "tag": "Software Installers",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "generate_software_download_link"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/registration.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/device",
+      "method": "POST",
+      "path": "/api/device",
+      "operationId": "addDevice",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_device"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/device-actions.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/devices/{deviceId}/notes",
+      "method": "POST",
+      "path": "/api/devices/{deviceId}/notes",
+      "operationId": "addNote",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "add_device_note"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/notes.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/notes.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/devices/{deviceId}/remote-control-task",
+      "method": "POST",
+      "path": "/api/devices/{deviceId}/remote-control-task",
+      "operationId": "createRemoteControlTask",
+      "tag": "Remote Control Tasks",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "composed-capability",
+      "capabilities": [
+        "create_remote_control_task"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/device-actions.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/devices/{deviceId}/services/actions",
+      "method": "POST",
+      "path": "/api/devices/{deviceId}/services/actions",
+      "operationId": "performWindowsServiceAction",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "composed-capability",
+      "capabilities": [
+        "perform_windows_service_action"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/device-actions.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/devices/maintenance-windows",
+      "method": "POST",
+      "path": "/api/devices/maintenance-windows",
+      "operationId": "addMaintenanceWindowsByDeviceIds",
+      "tag": "Maintenance Windows",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_maintenance_windows"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/tasks-maintenance.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/maintenance-windows.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/devices/notes",
+      "method": "POST",
+      "path": "/api/devices/notes",
+      "operationId": "addNoteBatch",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "add_notes_bulk"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/notes.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/notes.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/org-units/{orgUnitId}/access-groups",
+      "method": "POST",
+      "path": "/api/org-units/{orgUnitId}/access-groups",
+      "operationId": "createOrgUnitAccessGroup",
+      "tag": "Access Groups",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_access_group"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "POST /api/org-units/{orgUnitId}/device-access-groups",
+      "method": "POST",
+      "path": "/api/org-units/{orgUnitId}/device-access-groups",
+      "operationId": "createDeviceAccessGroup",
+      "tag": "Access Groups",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_device_access_group"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "POST /api/org-units/{orgUnitId}/user-roles",
+      "method": "POST",
+      "path": "/api/org-units/{orgUnitId}/user-roles",
+      "operationId": "addUserRole",
+      "tag": "User Roles",
+      "lifecycle": "preview",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_user_role"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/users-registration.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/users.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "POST /api/report/patch-comparison",
+      "method": "POST",
+      "path": "/api/report/patch-comparison",
+      "operationId": "generatePatchComparisonReport",
+      "tag": "Patch Reports",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "generate_patch_comparison_report"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/specialized-reports.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/reports.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "POST /api/scheduled-tasks/direct",
+      "method": "POST",
+      "path": "/api/scheduled-tasks/direct",
+      "operationId": "createRemoteExecutionTaskDirect",
+      "tag": "Scheduled Tasks",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_scheduled_task",
+        "create_direct_scheduled_task"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/tasks-maintenance.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/scheduled-tasks.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/server-info/extra/authenticated",
+      "method": "POST",
+      "path": "/api/server-info/extra/authenticated",
+      "operationId": "apiExtraAuthenticated",
+      "tag": "API-Service",
+      "lifecycle": "stable",
+      "status": "not-implemented",
+      "verificationStatus": "unverified",
+      "exposure": "internal-only",
+      "capabilities": [],
+      "gaps": [
+        "The credential-bearing authenticated server-info variant is not exposed; use the non-secret server status capability."
+      ],
+      "rationale": "The credential-bearing authenticated server-info variant is not exposed; use the non-secret server status capability.",
+      "testEvidence": [],
+      "sourceEvidence": [
+        "src/operations/server-info.js",
+        "test/openapi-spec.json"
+      ],
+      "userImpact": "Users cannot invoke this operation through a supported contract-complete adapter.",
+      "intendedDisposition": "Keep unsupported and internal-only until a contract-accurate adapter is justified.",
+      "safeAlternative": "Use get_server_status and validate_session for supported server and authentication checks."
+    },
+    {
+      "operationKey": "POST /api/service-orgs",
+      "method": "POST",
+      "path": "/api/service-orgs",
+      "operationId": "createServiceOrganization",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_service_org"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organization-admin.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json",
+        "src/tools/administration.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/service-orgs/{soId}/customers",
+      "method": "POST",
+      "path": "/api/service-orgs/{soId}/customers",
+      "operationId": "createCustomer",
+      "tag": "Organization Units",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "create_customer"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/organization-admin.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/organizations.js",
+        "test/openapi-spec.json",
+        "src/tools/administration.js"
+      ]
+    },
+    {
+      "operationKey": "POST /api/standard-psa/{psaType}/credential",
+      "method": "POST",
+      "path": "/api/standard-psa/{psaType}/credential",
+      "operationId": "validatePsaCredentials",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "validate_psa_credential"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json",
+        "src/tools/psa.js"
+      ]
+    },
+    {
+      "operationKey": "PUT /api/devices/{deviceId}/assets/lifecycle-info",
+      "method": "PUT",
+      "path": "/api/devices/{deviceId}/assets/lifecycle-info",
+      "operationId": "putAssetLifecycleInfo",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "update_device_lifecycle"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/device-actions.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/devices.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "PUT /api/devices/{deviceId}/custom-properties/{propertyId}",
+      "method": "PUT",
+      "path": "/api/devices/{deviceId}/custom-properties/{propertyId}",
+      "operationId": "modifyDeviceProperty",
+      "tag": "Custom Properties",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "update_device_custom_property"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/custom-properties.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/custom-properties.js",
+        "test/openapi-spec.json",
+        "src/tools/administration.js"
+      ]
+    },
+    {
+      "operationKey": "PUT /api/devices/{deviceId}/notes/{noteId}",
+      "method": "PUT",
+      "path": "/api/devices/{deviceId}/notes/{noteId}",
+      "operationId": "modifyNote",
+      "tag": "Devices",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "update_device_note"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/notes.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/notes.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "PUT /api/devices/maintenance-windows",
+      "method": "PUT",
+      "path": "/api/devices/maintenance-windows",
+      "operationId": "modifyMaintenanceWindows",
+      "tag": "Maintenance Windows",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "update_maintenance_windows"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/tasks-maintenance.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/maintenance-windows.js",
+        "test/openapi-spec.json",
+        "src/tools/operations.js"
+      ]
+    },
+    {
+      "operationKey": "PUT /api/org-units/{orgUnitId}/custom-properties/{propertyId}",
+      "method": "PUT",
+      "path": "/api/org-units/{orgUnitId}/custom-properties/{propertyId}",
+      "operationId": "modifyOrganizationUnitPropertyValue",
+      "tag": "Custom Properties",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "update_org_unit_custom_property"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/custom-properties.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/custom-properties.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "PUT /api/org-units/{orgUnitId}/org-custom-property-defaults",
+      "method": "PUT",
+      "path": "/api/org-units/{orgUnitId}/org-custom-property-defaults",
+      "operationId": "modifyDefaultOrganizationUnitProperty",
+      "tag": "Custom Properties",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "update_org_custom_property_default"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/custom-properties.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/custom-properties.js",
+        "test/openapi-spec.json"
+      ]
+    },
+    {
+      "operationKey": "PUT /api/standard-psa/customer/{customerId}/mappings",
+      "method": "PUT",
+      "path": "/api/standard-psa/customer/{customerId}/mappings",
+      "operationId": "updatePsaCustomerMappings",
+      "tag": "PSA",
+      "lifecycle": "stable",
+      "status": "implemented",
+      "verificationStatus": "verified",
+      "exposure": "direct-tool",
+      "capabilities": [
+        "update_psa_customer_mappings"
+      ],
+      "gaps": [],
+      "rationale": null,
+      "testEvidence": [
+        "test/contract/operations/psa.contract.test.js",
+        "test/contract/mcp/all-capabilities.contract.test.js"
+      ],
+      "sourceEvidence": [
+        "src/operations/psa.js",
+        "test/openapi-spec.json",
+        "src/tools/psa.js"
+      ]
+    }
+  ]
+}

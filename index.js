@@ -17,19 +17,8 @@ import { evictTenant } from './src/auth.js';
 import { registerResources, RESOURCE_COUNT, evictTenantCache } from './src/resources.js';
 import { registerPrompts, PROMPT_COUNT } from './src/prompts.js';
 import { auditLog } from './src/logging.js';
-import { isToolAllowed as _isToolAllowed, buildToolAnnotations } from './src/tool-registry.js';
-
-import { deviceTools } from './src/tools/devices.js';
-import { organizationTools } from './src/tools/organizations.js';
-import { scheduledTaskTools } from './src/tools/scheduled-tasks.js';
-import { customPropertyTools } from './src/tools/custom-properties.js';
-import { userTools } from './src/tools/users.js';
-import { noteTools } from './src/tools/notes.js';
-import { maintenanceWindowTools } from './src/tools/maintenance-windows.js';
-import { registrationTools } from './src/tools/registration.js';
-import { psaTools } from './src/tools/psa.js';
-import { serverInfoTools } from './src/tools/server-info.js';
-import { reportTools } from './src/tools/reports.js';
+import { buildToolAnnotations, isSensitiveTool, sanitizeToolError, toMcpResult } from './src/tool-registry.js';
+import { resolveToolConfiguration } from './src/toolsets.js';
 
 // Host suffixes a client-supplied X-NC-FQDN must match (SSRF guard). Empty = any https host.
 const NC_FQDN_ALLOWLIST = (process.env.NC_FQDN_ALLOWLIST || '')
@@ -57,29 +46,18 @@ const MAX_SESSIONS = Number(process.env.MCP_MAX_SESSIONS) || 256;
 const MAX_RATE_LIMIT_ENTRIES = 10_000;
 const QUIET = process.env.MCP_QUIET === '1';
 
-const NC_WRITE_MODE = (process.env.NC_WRITE_MODE || 'write').toLowerCase();
-const VALID_WRITE_MODES = new Set(['read-only', 'write', 'full']);
-if (!VALID_WRITE_MODES.has(NC_WRITE_MODE)) {
-  console.error(`Error: NC_WRITE_MODE must be one of: read-only, write, full (got: ${NC_WRITE_MODE})`);
+let toolConfiguration;
+try {
+  toolConfiguration = resolveToolConfiguration({
+    rawToolsets: process.env.NC_TOOLSETS,
+    rawWriteMode: process.env.NC_WRITE_MODE,
+  });
+} catch (error) {
+  console.error(`Error: ${error.message}`);
   process.exit(1);
 }
-
-const SENSITIVE_TOOLS = new Set([
-  'get_site_registration_token',
-  'get_org_unit_registration_token',
-  'get_customer_registration_token',
-  'get_registration_token',
-  'list_users',
-  'list_all_users',
-  'list_user_roles',
-  'get_user_role',
-  'list_access_groups',
-  'list_all_access_groups',
-  'get_access_group',
-]);
-
-const isToolAllowed = (tool) => _isToolAllowed(tool, NC_WRITE_MODE);
-
+const NC_WRITE_MODE = toolConfiguration.writeMode;
+const NC_TOOLSETS = toolConfiguration.toolsets;
 
 const rateLimitMap = new Map();
 
@@ -119,23 +97,8 @@ const rateLimitCleanup = setInterval(() => {
 rateLimitCleanup.unref();
 
 
-const allTools = [
-  ...deviceTools,
-  ...organizationTools,
-  ...scheduledTaskTools,
-  ...customPropertyTools,
-  ...userTools,
-  ...noteTools,
-  ...maintenanceWindowTools,
-  ...registrationTools,
-  ...psaTools,
-  ...serverInfoTools,
-  ...reportTools,
-].filter(isToolAllowed);
-
-for (const tool of allTools) {
-  if (tool.writeScope && tool.writeScope !== 'read') SENSITIVE_TOOLS.add(tool.name);
-}
+const allTools = toolConfiguration.tools;
+const SENSITIVE_TOOLS = new Set(allTools.filter(isSensitiveTool).map(({ name }) => name));
 
 /** Error type for invalid/missing per-request credentials → HTTP 400. */
 class ContextError extends Error {}
@@ -184,7 +147,7 @@ function runWithCtx(ctx, fn) {
 function createServer() {
   const srv = new McpServer({
     name: 'ncentral-api',
-    version: '2.1.0',
+    version: '3.0.0',
     description: 'N-central REST API MCP Server (Unofficial)',
   });
 
@@ -204,7 +167,12 @@ function createServer() {
     const toolName = tool.name;
     const annotations = buildToolAnnotations(tool);
 
-    srv.tool(toolName, tool.description, schemaShape, annotations, async (args) => {
+    srv.registerTool(toolName, {
+      description: tool.description,
+      inputSchema: schemaShape,
+      outputSchema: jsonSchemaToZod(tool.outputSchema),
+      annotations,
+    }, async (args) => {
       const t0 = Date.now();
       try {
         // Auth is lazy and per-tenant: the first apiRequest for this tenant
@@ -213,13 +181,12 @@ function createServer() {
           auditLog('sensitive_tool_call', { tool: toolName, args });
         }
 
-        const result = await handler(args);
+        const result = toMcpResult(tool, await handler(args));
         const durationMs = Date.now() - t0;
         auditLog('tool_call', { tool: toolName, success: true, durationMs });
         inc('nc_mcp_tool_calls_total', { tool: toolName, success: 'true' });
 
-        const text = typeof result === 'string' ? result : JSON.stringify(result);
-        return { content: [{ type: 'text', text }] };
+        return result;
       } catch (error) {
         const durationMs = Date.now() - t0;
         auditLog('tool_error', { tool: toolName, error: error.message, durationMs });
@@ -237,11 +204,7 @@ function createServer() {
   return srv;
 }
 
-function sanitizeErrorMessage(message) {
-  let msg = message.replace(/https?:\/\/[^\s]+/g, '[server]');
-  msg = msg.replace(/on GET \/api\/([^\s:]+)/g, 'on $1');
-  return msg.length > 300 ? msg.substring(0, 300) + '...' : msg;
-}
+const sanitizeErrorMessage = sanitizeToolError;
 
 function parseBody(req) {
   return new Promise((resolve, reject) => {
@@ -320,7 +283,7 @@ async function main() {
     }
 
     if (!QUIET) {
-      console.error(`Registered ${allTools.length} tools, ${RESOURCE_COUNT} resources, ${PROMPT_COUNT} prompts (NC_WRITE_MODE=${NC_WRITE_MODE})`);
+      console.error(`Registered ${allTools.length} tools, ${RESOURCE_COUNT} resources, ${PROMPT_COUNT} prompts (NC_TOOLSETS=${NC_TOOLSETS.join(',')}, NC_WRITE_MODE=${NC_WRITE_MODE})`);
       console.error(MULTI_TENANT
         ? 'Multi-tenant mode: per-request X-NC-FQDN / X-NC-JWT required; auth is per-tenant on first call.'
         : 'Auth will be performed on first tool call.');

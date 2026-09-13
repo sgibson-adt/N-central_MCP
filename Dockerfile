@@ -1,4 +1,4 @@
-FROM node:22-alpine
+FROM node:24-alpine
 
 ENV NODE_ENV=production
 WORKDIR /app
@@ -8,6 +8,7 @@ RUN npm ci --omit=dev
 
 COPY index.js ./
 COPY src/ ./src/
+COPY test/contract/mcp/legacy-tool-mappings.json ./test/contract/mcp/legacy-tool-mappings.json
 
 # Run as non-root.
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001

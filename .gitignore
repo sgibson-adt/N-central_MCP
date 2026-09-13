@@ -31,6 +31,9 @@ yarn-error.log*
 # Test / build artifacts
 coverage/
 .nyc_output/
+dist/
+build/
+*.tmp
 .eslintcache
 *.tgz
 *.json.bak
@@ -39,6 +42,11 @@ coverage/
 reports/
 *.csv
 
-# Claude Code / MCP client local state
+# Agent / MCP client local state
 .mcp.json
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/skills/**
+.agents/*
+!.agents/skills/
+!.agents/skills/**
