@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/n-central-rest-api-mcp/coverage-record.schema.json",
+  "title": "N-central OpenAPI Coverage Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source", "baseline", "operations"],
+  "properties": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "openapiVersion",
+        "productVersion",
+        "retrievedAt",
+        "sourceUrl",
+        "operationCount"
+      ],
+      "properties": {
+        "path": { "type": "string", "const": "test/openapi-spec.json" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "openapiVersion": { "type": "string" },
+        "productVersion": { "type": ["string", "null"] },
+        "retrievedAt": { "type": ["string", "null"], "format": "date-time" },
+        "sourceUrl": { "type": ["string", "null"], "format": "uri" },
+        "operationCount": { "type": "integer", "const": 104 }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["toolCount", "serializedDefinitionBytes"],
+      "properties": {
+        "toolCount": { "type": "integer", "const": 87 },
+        "serializedDefinitionBytes": { "type": "integer", "const": 55858 }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 104,
+      "maxItems": 104,
+      "items": { "$ref": "#/$defs/coverageRecord" }
+    }
+  },
+  "$defs": {
+    "coverageRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operationKey",
+        "method",
+        "path",
+        "operationId",
+        "tag",
+        "lifecycle",
+        "status",
+        "verificationStatus",
+        "exposure",
+        "capabilities",
+        "gaps",
+        "rationale",
+        "testEvidence",
+        "sourceEvidence"
+      ],
+      "properties": {
+        "operationKey": { "type": "string", "pattern": "^(GET|POST|PUT|PATCH|DELETE) /api" },
+        "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "path": { "type": "string", "pattern": "^/api" },
+        "operationId": { "type": ["string", "null"] },
+        "tag": { "type": "string", "minLength": 1 },
+        "lifecycle": { "enum": ["stable", "preview", "deprecated"] },
+        "status": { "enum": ["implemented", "partially-implemented", "not-implemented"] },
+        "verificationStatus": { "enum": ["unverified", "verified", "excluded"] },
+        "exposure": {
+          "enum": ["direct-tool", "composed-capability", "resource-backed", "internal-only", "excluded"]
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "gaps": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "rationale": { "type": ["string", "null"] },
+        "userImpact": { "type": "string", "minLength": 1 },
+        "intendedDisposition": { "type": "string", "minLength": 1 },
+        "safeAlternative": { "type": ["string", "null"], "minLength": 1 },
+        "testEvidence": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": ["status"],
+                "properties": { "status": { "enum": ["partially-implemented", "not-implemented"] } }
+              },
+              {
+                "required": ["exposure"],
+                "properties": { "exposure": { "enum": ["internal-only", "excluded"] } }
+              }
+            ]
+          },
+          "then": {
+            "required": ["userImpact", "intendedDisposition", "safeAlternative"],
+            "properties": {
+              "userImpact": {},
+              "intendedDisposition": {},
+              "safeAlternative": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["status"],
+            "properties": { "status": { "const": "implemented" } }
+          },
+          "then": { "properties": { "gaps": { "maxItems": 0 } } }
+        },
+        {
+          "if": {
+            "required": ["status"],
+            "properties": { "status": { "const": "partially-implemented" } }
+          },
+          "then": {
+            "properties": {
+              "gaps": { "minItems": 1 },
+              "rationale": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["status"],
+            "properties": { "status": { "const": "not-implemented" } }
+          },
+          "then": {
+            "properties": { "rationale": { "type": "string", "minLength": 1 } }
+          }
+        },
+        {
+          "if": {
+            "required": ["verificationStatus"],
+            "properties": { "verificationStatus": { "const": "verified" } }
+          },
+          "then": { "properties": { "testEvidence": { "minItems": 1 } } }
+        },
+        {
+          "if": {
+            "required": ["exposure"],
+            "properties": {
+              "exposure": {
+                "enum": ["direct-tool", "composed-capability", "resource-backed"]
+              }
+            }
+          },
+          "then": { "properties": { "capabilities": { "minItems": 1 } } }
+        },
+        {
+          "if": {
+            "required": ["exposure"],
+            "properties": { "exposure": { "const": "internal-only" } }
+          },
+          "then": {
+            "properties": { "rationale": { "type": "string", "minLength": 1 } }
+          }
+        },
+        {
+          "if": {
+            "required": ["exposure"],
+            "properties": { "exposure": { "const": "excluded" } }
+          },
+          "then": {
+            "properties": {
+              "status": { "const": "not-implemented" },
+              "verificationStatus": { "const": "excluded" },
+              "capabilities": { "maxItems": 0 },
+              "rationale": { "type": "string", "minLength": 1 }
+            }
+          },
+          "else": {
+            "properties": {
+              "verificationStatus": { "enum": ["unverified", "verified"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["verificationStatus"],
+            "properties": { "verificationStatus": { "const": "excluded" } }
+          },
+          "then": { "properties": { "exposure": { "const": "excluded" } } }
+        }
+      ]
+    }
+  }
+}

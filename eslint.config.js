@@ -3,6 +3,9 @@ import nodePlugin from 'eslint-plugin-n';
 import globals from 'globals';
 
 export default [
+  {
+    ignores: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**', '**/*.min.js'],
+  },
   js.configs.recommended,
   {
     files: ['**/*.js'],

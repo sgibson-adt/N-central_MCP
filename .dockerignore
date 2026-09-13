@@ -35,7 +35,12 @@ Thumbs.db
 LICENSE
 
 # Tests / lint / type-check — not needed in the runtime image
-test/
+test/*
+!test/contract/
+test/contract/*
+!test/contract/mcp/
+test/contract/mcp/*
+!test/contract/mcp/legacy-tool-mappings.json
 eslint.config.js
 .eslintcache
 tsconfig.json

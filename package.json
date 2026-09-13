@@ -1,6 +1,6 @@
 {
   "name": "n-central-rest-api-mcp",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Unofficial MCP server for the N-central REST API — exposes endpoints as MCP tools with org hierarchy resources and workflow prompts.",
   "type": "module",
   "private": true,
@@ -12,7 +12,20 @@
     "start": "node --env-file-if-exists=.env index.js",
     "start:stdio": "node --env-file-if-exists=.env index.js",
     "start:http": "MCP_PORT=3100 node --env-file-if-exists=.env index.js",
-    "test": "node --test test/*.test.js",
+    "test": "node --test test/*.test.js test/contract/*.test.js test/contract/operations/*.test.js test/contract/mcp/*.test.js test/evaluation/*.test.js",
+    "test:operations": "node --test test/contract/operations/*.test.js",
+    "test:mcp": "node --test test/contract/mcp/*.test.js",
+    "test:evaluation": "node --test test/evaluation/*.test.js",
+    "test:container": "RUN_CONTAINER_SMOKE=1 node --test test/container-smoke.test.js",
+    "evaluation:generate": "node scripts/evaluate-tool-selection.js",
+    "evaluation:check": "node scripts/evaluate-tool-selection.js --check",
+    "coverage:api": "node scripts/generate-api-coverage.js",
+    "coverage:api:check": "node --test test/contract/operation-inventory.test.js test/contract/coverage-manifest.test.js test/contract/coverage-report.test.js",
+    "migration:generate": "node scripts/generate-migration-guide.js",
+    "migration:check": "node scripts/generate-migration-guide.js --check",
+    "toolsets:generate": "node scripts/generate-toolset-docs.js",
+    "toolsets:check": "node scripts/generate-toolset-docs.js --check",
+    "version:check": "node scripts/check-version-consistency.js",
     "lint": "eslint .",
     "type-check": "tsc -p tsconfig.json"
   },
@@ -20,15 +33,17 @@
     "node": ">=22.9.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^4.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.19.21",
-    "eslint": "^10.4.0",
-    "eslint-plugin-n": "^18.0.1",
-    "globals": "^17.6.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-n": "^18.3.0",
+    "globals": "^17.12.0",
     "typescript": "^6.0.3"
   }
 }

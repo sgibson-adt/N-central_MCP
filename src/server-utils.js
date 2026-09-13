@@ -20,38 +20,77 @@ export function safeCompare(a, b) {
 }
 
 /**
- * Convert a tool's JSON-Schema property descriptor to a Zod schema.
- * Unknown types fall through to `z.string()`.
+ * Convert the JSON-Schema subset used by tool contracts to Zod. This is
+ * recursive so curated output schemas are advertised and enforced intact.
  *
- * @param {{ type?: string, items?: {type?: string}, enum?: string[], description?: string }} prop
+ * @param {Record<string, any>} prop
  * @returns {z.ZodTypeAny}
  */
 export function jsonSchemaToZod(prop) {
+  if (Array.isArray(prop.type)) {
+    const members = prop.type.map((type) => jsonSchemaToZod({ ...prop, type }));
+    return members.length === 1 ? members[0] : z.union(/** @type {any} */ (members));
+  }
   let schema;
   switch (prop.type) {
     case 'number':
-    case 'integer':
       schema = z.number();
+      break;
+    case 'integer':
+      schema = z.number().int();
       break;
     case 'boolean':
       schema = z.boolean();
       break;
     case 'array': {
-      const itemType = prop.items?.type;
-      if (itemType === 'number' || itemType === 'integer') schema = z.array(z.number());
-      else if (itemType === 'boolean') schema = z.array(z.boolean());
-      else if (itemType === 'object') schema = z.array(z.object({}).passthrough());
-      else schema = z.array(z.string());
+      schema = z.array(prop.items ? jsonSchemaToZod(prop.items) : z.string());
       break;
     }
-    case 'object':
-      schema = z.object({}).passthrough();
+    case 'object': {
+      if (!prop.properties) {
+        schema = z.object({}).passthrough();
+        break;
+      }
+      const required = new Set(prop.required || []);
+      const shape = {};
+      for (const [name, definition] of Object.entries(prop.properties)) {
+        const child = jsonSchemaToZod(/** @type {Record<string, any>} */ (definition));
+        shape[name] = required.has(name) ? child : child.optional();
+      }
+      schema = prop.additionalProperties === false ? z.object(shape).strict() : z.object(shape).passthrough();
       break;
+    }
     case 'string':
       schema = (prop.enum?.length) ? z.enum(prop.enum) : z.string();
       break;
     default:
-      schema = z.string();
+      schema = prop.type == null ? z.any() : z.string();
+  }
+  if (typeof prop.minimum === 'number' && typeof /** @type {any} */ (schema).min === 'function') {
+    schema = /** @type {any} */ (schema).min(prop.minimum);
+  }
+  if (typeof prop.maximum === 'number' && typeof /** @type {any} */ (schema).max === 'function') {
+    schema = /** @type {any} */ (schema).max(prop.maximum);
+  }
+  if (typeof prop.minLength === 'number' && typeof /** @type {any} */ (schema).min === 'function') {
+    schema = /** @type {any} */ (schema).min(prop.minLength);
+  }
+  if (typeof prop.maxLength === 'number' && typeof /** @type {any} */ (schema).max === 'function') {
+    schema = /** @type {any} */ (schema).max(prop.maxLength);
+  }
+  if (typeof prop.minItems === 'number' && typeof /** @type {any} */ (schema).min === 'function') {
+    schema = /** @type {any} */ (schema).min(prop.minItems);
+  }
+  if (typeof prop.maxItems === 'number' && typeof /** @type {any} */ (schema).max === 'function') {
+    schema = /** @type {any} */ (schema).max(prop.maxItems);
+  }
+  if (typeof prop.pattern === 'string' && typeof /** @type {any} */ (schema).regex === 'function') {
+    schema = /** @type {any} */ (schema).regex(new RegExp(prop.pattern));
+  }
+  if (prop.uniqueItems === true && prop.type === 'array') {
+    schema = schema.refine((items) => new Set(items.map((item) => JSON.stringify(item))).size === items.length, {
+      message: 'Array items must be unique',
+    });
   }
   if (prop.description) schema = schema.describe(prop.description);
   return schema;

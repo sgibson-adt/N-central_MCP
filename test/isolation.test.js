@@ -14,6 +14,8 @@ import net from 'node:net';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -23,6 +25,7 @@ import { als, getContext, makeContext } from '../src/context.js';
 import { apiGet } from '../src/client.js';
 import { evictTenant } from '../src/auth.js';
 import { cached, evictTenantCache } from '../src/resources.js';
+import { resolveToolConfiguration } from '../src/toolsets.js';
 import { installMockFetch } from './mock-fetch.js';
 
 const ctxA = makeContext('https://a.example.com', 'jwtA');
@@ -150,7 +153,14 @@ async function mcpPost(port, extraHeaders, body) {
   const sessionId = res.headers.get('mcp-session-id');
   const text = await res.text();
   let json = null;
-  if (text) { try { json = JSON.parse(text); } catch { json = text; } }
+  if (text) {
+    const payload = text
+      .split(/\r?\n/)
+      .find((line) => line.startsWith('data:'))
+      ?.slice('data:'.length)
+      .trim() || text;
+    try { json = JSON.parse(payload); } catch { json = text; }
+  }
   return { status: res.status, sessionId, json };
 }
 
@@ -203,6 +213,7 @@ describe('end-to-end session isolation through the real MCP transport', () => {
 // Boot matrix
 // ---------------------------------------------------------------------------
 const indexPath = fileURLToPath(new URL('../index.js', import.meta.url));
+const mockLoaderPath = fileURLToPath(new URL('./contract/mock-fetch-loader.js', import.meta.url));
 
 function freePort() {
   return new Promise((resolve) => {
@@ -316,6 +327,142 @@ describe('single-tenant SSRF guard', () => {
       assert.ok(r.sessionId, 'expected a session bound to the env tenant');
     } finally {
       child.kill('SIGKILL');
+    }
+  });
+});
+
+describe('real curated registry parity', () => {
+  it('advertises and calls structured core tools over stdio', async () => {
+    const client = new Client({ name: 'stdio-contract', version: '1' });
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: ['--import', mockLoaderPath, indexPath],
+      env: cleanEnv({ NC_SERVER_URL: 'https://stdio.example.test', NC_JWT_TOKEN: 'a.b.c', MCP_QUIET: '1' }),
+      stderr: 'pipe',
+    });
+    try {
+      await client.connect(transport);
+      const tools = await client.listTools();
+      assert.deepEqual(tools.tools.map((tool) => tool.name), [
+        'get_server_status', 'validate_session', 'get_current_user', 'search_organizations',
+        'get_organization_context', 'search_devices', 'get_device_context', 'list_active_issues',
+        'list_device_scheduled_tasks', 'get_scheduled_task_context', 'run_report', 'list_job_statuses',
+      ]);
+      const result = await client.callTool({ name: 'validate_session', arguments: {} });
+      assert.ok(result.structuredContent);
+      assert.equal(result.isError, undefined);
+    } finally { await client.close(); }
+  });
+
+  it('advertises and calls the same selected read catalog over HTTP', async () => {
+    const port = await freePort();
+    const child = spawn(process.execPath, ['--import', mockLoaderPath, indexPath], {
+      env: cleanEnv({ NC_SERVER_URL: 'https://http.example.test', NC_JWT_TOKEN: 'a.b.c', MCP_PORT: String(port), MCP_API_KEY: 'k', MCP_QUIET: '1' }),
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    try {
+      await waitForHealth(port);
+      const headers = { Authorization: 'Bearer k' };
+      const init = await mcpPost(port, headers, initMsg(51));
+      assert.ok(init.sessionId);
+      const sessionHeaders = { ...headers, 'mcp-session-id': init.sessionId };
+      await mcpPost(port, sessionHeaders, initializedMsg());
+      const listed = await mcpPost(port, sessionHeaders, { jsonrpc: '2.0', id: 52, method: 'tools/list', params: {} });
+      assert.ok(listed.json?.result, JSON.stringify(listed));
+      assert.equal(listed.json.result.tools.length, 12);
+      const called = await mcpPost(port, sessionHeaders, { jsonrpc: '2.0', id: 53, method: 'tools/call', params: { name: 'validate_session', arguments: {} } });
+      assert.ok(called.json.result.structuredContent);
+    } finally { child.kill('SIGKILL'); }
+  });
+
+  it('preserves structured results, session deletion, and graceful HTTP shutdown', async () => {
+    const port = await freePort();
+    const child = spawn(process.execPath, ['--import', mockLoaderPath, indexPath], {
+      env: cleanEnv({ NC_SERVER_URL: 'https://lifecycle.example.test', NC_JWT_TOKEN: 'a.b.c', MCP_PORT: String(port), MCP_API_KEY: 'k', MCP_QUIET: '1' }),
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    try {
+      await waitForHealth(port);
+      const headers = { Authorization: 'Bearer k' };
+      const init = await mcpPost(port, headers, initMsg(71));
+      const sessionHeaders = { ...headers, 'mcp-session-id': init.sessionId };
+      await mcpPost(port, sessionHeaders, initializedMsg());
+      const called = await mcpPost(port, sessionHeaders, { jsonrpc: '2.0', id: 72, method: 'tools/call', params: { name: 'validate_session', arguments: {} } });
+      assert.deepEqual(called.json.result.structuredContent.meta.operations, ['GET /api/auth/validate']);
+      assert.equal(called.json.result.structuredContent.meta.partial, false);
+
+      const deleted = await fetch(`http://127.0.0.1:${port}/mcp`, {
+        method: 'DELETE', headers: { ...sessionHeaders, Accept: 'application/json, text/event-stream' },
+      });
+      assert.equal(deleted.status, 200);
+      const afterDelete = await mcpPost(port, sessionHeaders, { jsonrpc: '2.0', id: 73, method: 'tools/list', params: {} });
+      assert.equal(afterDelete.status, 400);
+      const health = await (await fetch(`http://127.0.0.1:${port}/healthz`)).json();
+      assert.equal(health.sessions, 0);
+
+      const exited = new Promise((resolve) => child.once('exit', (code, signal) => resolve({ code, signal })));
+      child.kill('SIGTERM');
+      const outcome = await Promise.race([
+        exited,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('HTTP server did not shut down')), 2000)),
+      ]);
+      assert.deepEqual(outcome, { code: 0, signal: null });
+    } finally {
+      if (child.exitCode == null && child.signalCode == null) child.kill('SIGKILL');
+    }
+  });
+
+  it('keeps stdio and HTTP discovery identical across toolsets and write modes', async () => {
+    const configurations = [
+      { toolsets: 'core', writeMode: 'read-only' },
+      { toolsets: 'operations', writeMode: 'write' },
+      { toolsets: 'core,operations,administration,psa,reporting,compatibility', writeMode: 'full' },
+    ];
+
+    for (const configuration of configurations) {
+      const expected = resolveToolConfiguration({
+        rawToolsets: configuration.toolsets,
+        rawWriteMode: configuration.writeMode,
+      }).tools.map((tool) => tool.name);
+      const baseEnv = {
+        NC_SERVER_URL: 'https://parity.example.test',
+        NC_JWT_TOKEN: 'a.b.c',
+        NC_TOOLSETS: configuration.toolsets,
+        NC_WRITE_MODE: configuration.writeMode,
+        MCP_QUIET: '1',
+      };
+
+      const client = new Client({ name: 'stdio-parity', version: '1' });
+      const transport = new StdioClientTransport({
+        command: process.execPath,
+        args: ['--import', mockLoaderPath, indexPath],
+        env: cleanEnv(baseEnv),
+        stderr: 'pipe',
+      });
+      let stdioNames;
+      try {
+        await client.connect(transport);
+        stdioNames = (await client.listTools()).tools.map((tool) => tool.name);
+      } finally { await client.close(); }
+
+      const port = await freePort();
+      const child = spawn(process.execPath, ['--import', mockLoaderPath, indexPath], {
+        env: cleanEnv({ ...baseEnv, MCP_PORT: String(port), MCP_API_KEY: 'k' }),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      let httpNames;
+      try {
+        await waitForHealth(port);
+        const headers = { Authorization: 'Bearer k' };
+        const init = await mcpPost(port, headers, initMsg(61));
+        const sessionHeaders = { ...headers, 'mcp-session-id': init.sessionId };
+        await mcpPost(port, sessionHeaders, initializedMsg());
+        const listed = await mcpPost(port, sessionHeaders, { jsonrpc: '2.0', id: 62, method: 'tools/list', params: {} });
+        httpNames = listed.json.result.tools.map((tool) => tool.name);
+      } finally { child.kill('SIGKILL'); }
+
+      assert.deepEqual(stdioNames, expected, `${configuration.toolsets}/${configuration.writeMode} stdio drift`);
+      assert.deepEqual(httpNames, expected, `${configuration.toolsets}/${configuration.writeMode} HTTP drift`);
     }
   });
 });

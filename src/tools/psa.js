@@ -1,157 +1,33 @@
-/** PSA (Professional Services Automation) integration tools. */
+// @ts-check
+import * as psa from '../operations/psa.js';
+import { defineTool, id, objectInput } from './helpers.js';
 
-import { apiGet, apiPost, apiPut, sanitizePathParam } from '../client.js';
-
-export const psaTools = [
-  {
-    name: 'get_psa_customer_mapping',
-    description: 'Retrieve PSA (Professional Services Automation) customer mapping for a given customer ID.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        customerId: { type: 'number', description: 'The customer ID' },
-      },
-      required: ['customerId'],
-    },
-    handler: async (args) => {
-      return await apiGet(`/api/standard-psa/customer-mapping/${sanitizePathParam(args.customerId)}`);
-    },
-  },
-  {
-    name: 'validate_psa_credential',
-    writeScope: 'write',
-    description: 'Validate Standard PSA credentials for a given PSA type. Transmits credentials in the request body — use with care over untrusted transports. WARNING: per N-central documentation, this endpoint currently works only with TigerPaw 3.0, not other PSA integrations — calls for other PSAs will fail.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        psaType: { type: 'string', description: 'The PSA type' },
-        username: { type: 'string', description: 'PSA username' },
-        password: { type: 'string', description: 'PSA password' },
-      },
-      required: ['psaType', 'username', 'password'],
-    },
-    handler: async (args) => {
-      return await apiPost(`/api/standard-psa/${sanitizePathParam(args.psaType)}/credential`, {
-        username: args.username,
-        password: args.password,
-      });
-    },
-  },
-  {
-    name: 'list_custom_psa_tickets',
-    description: 'List Custom PSA tickets. Custom PSA only — managed PSA services are not supported by this endpoint.',
-    inputSchema: { type: 'object', properties: {} },
-    handler: async () => {
-      return await apiGet('/api/custom-psa/tickets');
-    },
-  },
-  {
-    name: 'create_custom_psa_ticket',
-    writeScope: 'write',
-    description: 'Create a new Custom PSA ticket. Custom PSA only — operations for managed PSA services are not supported.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        body: { type: 'object', description: 'Custom PSA ticket payload — refer to N-central API docs for required fields' },
-      },
-      required: ['body'],
-    },
-    handler: async (args) => {
-      return await apiPost('/api/custom-psa/tickets', args.body);
-    },
-  },
-  {
-    name: 'list_psa_customer_mappings',
-    description: 'List all Standard PSA mappings for a customer.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        customerId: { type: 'number', description: 'The customer ID' },
-      },
-      required: ['customerId'],
-    },
-    handler: async (args) => {
-      return await apiGet(`/api/standard-psa/customer/${sanitizePathParam(args.customerId)}/mappings`);
-    },
-  },
-  {
-    name: 'update_psa_customer_mappings',
-    writeScope: 'write',
-    description: 'Update Standard PSA mappings for a customer.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        customerId: { type: 'number', description: 'The customer ID' },
-        body: { type: 'object', description: 'PSA mappings payload' },
-      },
-      required: ['customerId', 'body'],
-    },
-    handler: async (args) => {
-      return await apiPut(`/api/standard-psa/customer/${sanitizePathParam(args.customerId)}/mappings`, args.body);
-    },
-  },
-  {
-    name: 'list_psa_companies',
-    description: 'List Standard PSA companies associated with a customer.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        customerId: { type: 'number', description: 'The customer ID' },
-      },
-      required: ['customerId'],
-    },
-    handler: async (args) => {
-      return await apiGet(`/api/standard-psa/customers/${sanitizePathParam(args.customerId)}/companies`);
-    },
-  },
-  {
-    name: 'list_psa_company_contacts',
-    description: 'List PSA company contacts for a customer.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        customerId: { type: 'number', description: 'The customer ID' },
-        psaCompanyId: { type: 'string', description: 'The PSA company ID' },
-      },
-      required: ['customerId', 'psaCompanyId'],
-    },
-    handler: async (args) => {
-      return await apiGet(`/api/standard-psa/customers/${sanitizePathParam(args.customerId)}/companies/${sanitizePathParam(args.psaCompanyId)}/contacts`);
-    },
-  },
-  {
-    name: 'list_psa_company_sites',
-    description: 'List PSA company sites for a customer.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        customerId: { type: 'number', description: 'The customer ID' },
-        psaCompanyId: { type: 'string', description: 'The PSA company ID' },
-      },
-      required: ['customerId', 'psaCompanyId'],
-    },
-    handler: async (args) => {
-      return await apiGet(`/api/standard-psa/customers/${sanitizePathParam(args.customerId)}/companies/${sanitizePathParam(args.psaCompanyId)}/sites`);
-    },
-  },
-  {
-    name: 'get_custom_psa_ticket_detail',
-    writeScope: 'write',
-    description: 'Retrieve detailed information for a specific Custom PSA ticket. Uses POST because the endpoint requires PSA credentials in the body.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        customPsaTicketId: { type: 'string', description: 'The Custom PSA ticket ID' },
-        username: { type: 'string', description: 'PSA username' },
-        password: { type: 'string', description: 'PSA password' },
-      },
-      required: ['customPsaTicketId', 'username', 'password'],
-    },
-    handler: async (args) => {
-      return await apiPost(
-        `/api/custom-psa/tickets/${sanitizePathParam(args.customPsaTicketId)}`,
-        { username: args.username, password: args.password }
-      );
-    },
-  },
-];
+const customerId = id('Customer identifier.');
+const ticketId = id('Custom PSA ticket identifier.');
+const object = (properties, required = []) => ({
+  type: 'object', additionalProperties: false, properties, ...(required.length ? { required } : {}),
+});
+const credentials = object({ username: { type: 'string' }, password: { type: 'string' } });
+const ticketBody = object({
+  psaCustomTicketId: { type: 'integer' }, ticketNumber: { type: 'string' },
+  ticketUrl: { type: 'string', pattern: '^https?://.+' },
+}, ['psaCustomTicketId', 'ticketNumber', 'ticketUrl']);
+const mappingBody = object({
+  customerId: { type: 'integer', minimum: 1 }, psaCompanyId: { type: 'integer' },
+  psaSiteId: { type: 'integer' }, psaContactId: { type: 'integer' },
+}, ['customerId']);
+const D = (name, description, properties, required, operations, writeScope, run) => defineTool({ name, description, inputSchema: objectInput(properties, required), operations, toolset: 'psa', writeScope, run });
+export const psaTools = Object.freeze([
+  D('get_psa_customer_mapping', 'Retrieve the canonical Standard PSA mapping for one customer.', { customerId }, ['customerId'], ['GET /api/standard-psa/customer/{customerId}/mappings'], 'read', (a) => psa.getPsaCustomerMapping(a.customerId)),
+  D('validate_psa_credential', 'Validate sensitive Standard PSA credentials for a named PSA type.', { psaType: { type: 'string' }, username: { type: 'string' }, password: { type: 'string' } }, ['psaType'], ['POST /api/standard-psa/{psaType}/credential'], 'write', (a) => psa.validatePsaCredential(a.psaType, { username: a.username, password: a.password })),
+  D('search_psa_tickets', 'Search Custom PSA ticket links and records exposed by N-central.', {}, [], ['GET /api/custom-psa/tickets'], 'read', psa.searchPsaTickets),
+  D('get_psa_ticket', 'Retrieve one Custom PSA ticket, optionally using supplied PSA credentials.', { ticketId, credentials }, ['ticketId'], ['GET /api/custom-psa/tickets/{customPsaTicketId}', 'POST /api/custom-psa/tickets/{customPsaTicketId}'], 'read', (a) => psa.getPsaTicket(a.ticketId, a.credentials)),
+  D('create_psa_ticket', 'Create a Custom PSA ticket from its required external ticket fields.', { body: ticketBody }, ['body'], ['POST /api/custom-psa/tickets'], 'write', (a) => psa.createPsaTicket(a.body)),
+  D('resolve_psa_ticket', 'Resolve one explicitly identified Custom PSA ticket.', { ticketId }, ['ticketId'], ['POST /api/custom-psa/tickets/{customPsaTicketId}/resolve'], 'write', (a) => psa.resolvePsaTicket(a.ticketId)),
+  D('reopen_psa_ticket', 'Reopen one explicitly identified Custom PSA ticket.', { ticketId }, ['ticketId'], ['POST /api/custom-psa/tickets/{customPsaTicketId}/reopen'], 'write', (a) => psa.reopenPsaTicket(a.ticketId)),
+  D('list_psa_customer_mappings', 'List Standard PSA mappings for one customer.', { customerId }, ['customerId'], ['GET /api/standard-psa/customer/{customerId}/mappings'], 'read', (a) => psa.listPsaCustomerMappings(a.customerId)),
+  D('update_psa_customer_mappings', 'Replace Standard PSA mappings for one customer.', { customerId, body: mappingBody }, ['customerId', 'body'], ['PUT /api/standard-psa/customer/{customerId}/mappings'], 'write', (a) => psa.updatePsaCustomerMappings(a.customerId, a.body)),
+  D('list_psa_companies', 'List Standard PSA companies available to one customer.', { customerId }, ['customerId'], ['GET /api/standard-psa/customers/{customerId}/companies'], 'read', (a) => psa.listPsaCompanies(a.customerId)),
+  D('list_psa_company_contacts', 'List contacts for one Standard PSA company and customer.', { customerId, psaCompanyId: id('PSA company identifier.') }, ['customerId', 'psaCompanyId'], ['GET /api/standard-psa/customers/{customerId}/companies/{psaCompanyId}/contacts'], 'read', (a) => psa.listPsaCompanyContacts(a.customerId, a.psaCompanyId)),
+  D('list_psa_company_sites', 'List sites for one Standard PSA company and customer.', { customerId, psaCompanyId: id('PSA company identifier.') }, ['customerId', 'psaCompanyId'], ['GET /api/standard-psa/customers/{customerId}/companies/{psaCompanyId}/sites'], 'read', (a) => psa.listPsaCompanySites(a.customerId, a.psaCompanyId)),
+]);

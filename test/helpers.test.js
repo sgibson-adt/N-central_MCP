@@ -119,8 +119,8 @@ describe('mapConcurrent', () => {
 // shared: paginationArgs clamping
 // ---------------------------------------------------------------------------
 describe('paginationArgs', () => {
-  it('clamps pageSize above 200 to 200', () => {
-    assert.equal(paginationArgs({ pageSize: 5000 }).pageSize, 200);
+  it('clamps pageSize above 1000 to 1000', () => {
+    assert.equal(paginationArgs({ pageSize: 5000 }).pageSize, 1000);
   });
   it('clamps pageSize below 1 to 1', () => {
     assert.equal(paginationArgs({ pageSize: 0 }).pageSize, 1);

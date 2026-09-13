@@ -23,6 +23,36 @@ For installing/running the server itself and the full tool list, see the [README
 
 ---
 
+## Tool catalog and authority
+
+The 3.0 interface defaults to exactly 12 task-oriented `core` tools in `read-only` mode. Choose
+additional catalogs with `NC_TOOLSETS`; choose authority independently with `NC_WRITE_MODE`:
+
+```dotenv
+NC_TOOLSETS=core,reporting
+NC_WRITE_MODE=read-only
+```
+
+Valid toolsets are `core`, `operations`, `administration`, `psa`, `reporting`, and the deprecated
+`compatibility` migration catalog. Valid modes are `read-only`, `write`, and `full`; destructive
+tools are visible only in `full`. Catalog unions are de-duplicated and then intersected with the
+mode, so selecting a catalog never bypasses authority.
+
+Set these variables in the server process for HTTP deployments or in each MCP server entry's `env`
+for stdio. Omit both for the safest default. See [MCP Toolsets](MCP-TOOLSETS.md) for exact current
+membership and [Migrating to 3.0](MIGRATING-TO-3.0.md) before enabling `compatibility`.
+
+Successful calls return stable `structuredContent` with `data` and `meta` fields plus a readable
+text fallback. `meta` records contributing REST operations, pagination, partial component errors,
+and truncation. Responses are bounded to 256 KiB; automatic paging and composed calls are bounded
+as documented in the [README](../README.md#pagination-and-composition-limits).
+
+The reviewed API snapshot contains 104 operations: 86 implemented, 7 verified partial, 5 missing,
+and 6 intentionally excluded. Consult [API Coverage](API-COVERAGE.md) for limitations before relying
+on an optional or compatibility capability.
+
+---
+
 ## 2. Multi-tenant requirements — read before configuring a client
 
 When connecting to a **hosted / multi-tenant** server, every request must carry **three headers**:

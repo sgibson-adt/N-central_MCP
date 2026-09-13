@@ -5,6 +5,14 @@ import { apiGet } from './client.js';
 import { fetchAll, toCsv } from './paginator.js';
 
 /** @typedef {{ pageNumber?: number, pageSize?: number, select?: string, sortBy?: string, sortOrder?: string, all?: boolean, format?: 'csv' | 'json' }} PaginationArgs */
+/** @typedef {{ maxPageSize: number, allowMinusOne: boolean, autoPageSize: number }} PaginationPolicy */
+
+/** Reviewed policies derived from the OpenAPI descriptions. */
+export const PAGINATION_POLICIES = Object.freeze({
+  positiveOnly: Object.freeze({ maxPageSize: 1000, allowMinusOne: false, autoPageSize: 1000 }),
+  allowAll: Object.freeze({ maxPageSize: 1000, allowMinusOne: true, autoPageSize: 1000 }),
+  activeIssues: Object.freeze({ maxPageSize: 1000, allowMinusOne: false, autoPageSize: 1000 }),
+});
 
 export const formatParam = {
   format: {
@@ -16,7 +24,7 @@ export const formatParam = {
 
 export const paginationParams = {
   pageNumber: { type: 'number', description: 'Page number (starts at 1)' },
-  pageSize: { type: 'number', description: 'Number of items per page (max 200)' },
+  pageSize: { type: 'integer', description: 'Number of items per page (1-1000; some operations also document -1)', minimum: -1, maximum: 1000 },
   select: {
     type: 'string',
     description: 'Filter expression (FIQL/RSQL predicate) — despite the "select" name, this filters rows, it does NOT pick fields. Syntax: `field==value`, join predicates with `;` for AND. Example: `soId==50` returns only the SO with that ID. Not all fields are queryable; unsupported ones error with "Field not found: X".',
@@ -33,11 +41,14 @@ export const paginationParams = {
   },
 };
 
-export function paginationArgs(args) {
-  // Clamp pageSize to N-central's documented range; pageNumber to >=1.
-  const clampedPageSize = args.pageSize != null
-    ? Math.min(200, Math.max(1, Number(args.pageSize) || 1))
-    : undefined;
+/** @param {PaginationArgs | Record<string, any>} args @param {PaginationPolicy} [policy] */
+export function paginationArgs(args, policy = PAGINATION_POLICIES.positiveOnly) {
+  const requestedPageSize = Number(args.pageSize);
+  const clampedPageSize = args.pageSize == null
+    ? undefined
+    : requestedPageSize === -1 && policy.allowMinusOne
+      ? -1
+      : Math.min(policy.maxPageSize, Math.max(1, Number.isFinite(requestedPageSize) ? Math.floor(requestedPageSize) : 1));
   const clampedPageNumber = args.pageNumber != null
     ? Math.max(1, Number(args.pageNumber) || 1)
     : undefined;
@@ -58,9 +69,10 @@ export function paginationArgs(args) {
  * @param {PaginationArgs} [args]
  * @returns {Promise<unknown>}
  */
-export async function fetchOrPaginate(path, baseParams, args) {
-  if (args?.all) return fetchAll(path, baseParams);
-  return apiGet(path, { ...baseParams, ...paginationArgs(args || {}) });
+/** @param {string} path @param {Record<string, unknown>} baseParams @param {PaginationArgs} [args] @param {PaginationPolicy} [policy] */
+export async function fetchOrPaginate(path, baseParams, args, policy = PAGINATION_POLICIES.positiveOnly) {
+  if (args?.all) return fetchAll(path, baseParams, policy.autoPageSize);
+  return apiGet(path, { ...baseParams, ...paginationArgs(args || {}, policy) });
 }
 
 /**

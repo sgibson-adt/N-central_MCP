@@ -1,11 +1,23 @@
 /** MCP Resources: read-only context. */
 
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { apiGet, sanitizePathParam } from './client.js';
-import { fetchAll, mapConcurrent } from './paginator.js';
+import { mapConcurrent } from './paginator.js';
 import { getContext } from './context.js';
+import { getHealth, getServerInfo } from './operations/server-info.js';
+import { getDevice } from './operations/devices.js';
+import { getOrganization, searchOrganizations } from './operations/organizations.js';
 
 export const RESOURCE_COUNT = 5;
+export const RESOURCE_OPERATION_REFERENCES = Object.freeze([
+  'GET /api/service-orgs',
+  'GET /api/service-orgs/{soId}/customers',
+  'GET /api/customers/{customerId}/sites',
+  'GET /api/health',
+  'GET /api/server-info',
+  'GET /api/devices/{deviceId}',
+  'GET /api/customers/{customerId}',
+  'GET /api/org-units/{orgUnitId}',
+]);
 
 const CACHE_TTL_MS = Number(process.env.NC_RESOURCE_CACHE_TTL_MS ?? 60_000);
 const cache = new Map();
@@ -39,17 +51,17 @@ export function registerResources(server) {
     { description: 'Full org hierarchy: Service Orgs → Customers → Sites with IDs and names.', mimeType: 'application/json' },
     async () => {
       const tree = await cached('ncentral://org-tree', async () => {
-        const serviceOrgs = await fetchAll('/api/service-orgs');
+        const serviceOrgs = /** @type {any[]} */ (await searchOrganizations('service-org', { all: true }));
 
         const soNodes = await mapConcurrent(serviceOrgs, async (so) => {
           const soId = so.soId || so.id;
-          const customers = await fetchAll(`/api/service-orgs/${sanitizePathParam(soId)}/customers`);
+          const customers = /** @type {any[]} */ (await searchOrganizations('customer', { parentId: soId, all: true }));
 
           const customerNodes = await mapConcurrent(customers, async (cust) => {
             const custId = cust.customerId || cust.id;
             let sites = [];
             try {
-              sites = await fetchAll(`/api/customers/${sanitizePathParam(custId)}/sites`);
+              sites = /** @type {any[]} */ (await searchOrganizations('site', { parentId: custId, all: true }));
             } catch (err) {
               console.error(`Failed to fetch sites for customer ${custId}: ${err.message}`);
             }
@@ -74,7 +86,7 @@ export function registerResources(server) {
     'status', 'ncentral://status',
     { description: 'Server health and version info.', mimeType: 'application/json' },
     async () => {
-      const [health, info] = await Promise.all([apiGet('/api/health'), apiGet('/api/server-info')]);
+      const [health, info] = await Promise.all([getHealth(), getServerInfo()]);
       return { contents: [{ uri: 'ncentral://status', mimeType: 'application/json', text: JSON.stringify({ health, serverInfo: info }) }] };
     }
   );
@@ -84,7 +96,7 @@ export function registerResources(server) {
     new ResourceTemplate('ncentral://device/{deviceId}', { list: undefined }),
     { description: 'Full device record by ID. URI: ncentral://device/{deviceId}', mimeType: 'application/json' },
     async (uri, { deviceId }) => {
-      const device = await apiGet(`/api/devices/${sanitizePathParam(deviceId)}`);
+      const device = await getDevice(String(deviceId));
       return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(device) }] };
     }
   );
@@ -94,7 +106,7 @@ export function registerResources(server) {
     new ResourceTemplate('ncentral://customer/{customerId}', { list: undefined }),
     { description: 'Customer details by ID. URI: ncentral://customer/{customerId}', mimeType: 'application/json' },
     async (uri, { customerId }) => {
-      const customer = await apiGet(`/api/customers/${sanitizePathParam(customerId)}`);
+      const customer = await getOrganization('customer', String(customerId));
       return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(customer) }] };
     }
   );
@@ -104,7 +116,7 @@ export function registerResources(server) {
     new ResourceTemplate('ncentral://org-unit/{orgUnitId}', { list: undefined }),
     { description: 'Organization unit details by ID. URI: ncentral://org-unit/{orgUnitId}', mimeType: 'application/json' },
     async (uri, { orgUnitId }) => {
-      const ou = await apiGet(`/api/org-units/${sanitizePathParam(orgUnitId)}`);
+      const ou = await getOrganization('org-unit', String(orgUnitId));
       return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(ou) }] };
     }
   );
