@@ -8,6 +8,7 @@ import {
 import {
   getRegistrationToken, getDeviceActivationKey, getSoftwareInstallers, generateSoftwareDownloadLink,
 } from '../../../src/operations/registration.js';
+import { administrationTools } from '../../../src/tools/administration.js';
 
 let boundary; afterEach(() => boundary?.restore());
 it('routes users, roles, access groups, tokens, activation, and installers', async () => {
@@ -30,4 +31,26 @@ it('routes users, roles, access groups, tokens, activation, and installers', asy
     '/api/customers/3/registration-token', '/api/devices/4/activation-key',
     '/api/customers/5/software/installers', '/api/customers/5/software/installers',
   ]);
+});
+
+it('preserves role identifiers and pagination while rejecting invalid pages before I/O', async () => {
+  for (const name of ['list_user_roles', 'get_user_role', 'create_user_role', 'get_registration_token']) {
+    assert.match(administrationTools.find((tool) => tool.name === name).description, /PREVIEW/, name);
+  }
+  boundary = installContractFetch();
+  await withSyntheticTenant(syntheticTenant('roles'), async () => {
+    await listUserRoles('17', {
+      pageNumber: 4, pageSize: -1, select: 'roleName==Ops', sortBy: 'roleName', sortOrder: 'asc',
+    });
+    await getUserRole('17', '29');
+    const callsBeforeInvalid = boundary.calls.length;
+    await assert.rejects(() => listUserRoles('17', { pageSize: 1001 }), /pageSize/);
+    assert.equal(boundary.calls.length, callsBeforeInvalid);
+  });
+  const calls = boundary.calls.filter((call) => !call.path.startsWith('/api/auth/'));
+  assert.equal(calls[0].path, '/api/org-units/17/user-roles');
+  assert.deepEqual(calls[0].query, {
+    pageNumber: '4', pageSize: '-1', select: 'roleName==Ops', sortBy: 'roleName', sortOrder: 'asc',
+  });
+  assert.equal(calls[1].path, '/api/org-units/17/user-roles/29');
 });

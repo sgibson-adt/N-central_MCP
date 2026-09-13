@@ -39,8 +39,17 @@ for registration, input and output schemas, contributing operation mappings, and
 classification. Risk-sensitive behavior MUST additionally cover authentication, validation,
 redaction, retries, pagination, concurrency, error propagation, and tenant isolation as applicable.
 Tests MUST be deterministic, MUST NOT require live N-central credentials or network access, and MUST
-run on every supported Node.js major version. A skipped or weakened test requires an explicit,
-time-bounded justification in the governing feature artifacts.
+run on every supported Node.js major version. In addition to deterministic tests, every code change
+that alters N-central request construction, authentication or session behavior, response handling,
+operation composition, or public MCP execution MUST receive a one-off credential-backed verification
+against an authorized test server before merge. A maintainer MUST supply a temporary token at
+verification time; the token MUST remain outside source control and CI. Live verification MUST be
+read-only by default. A mutating scenario MUST use an explicitly approved disposable fixture, and a
+destructive scenario MUST receive separate maintainer approval before execution. The retained result
+MUST identify the behaviors checked and their pass, fail, or justified not-applicable outcomes without
+including credentials or tenant-derived values. A skipped or weakened deterministic test requires an
+explicit, time-bounded justification in the governing feature artifacts; live verification required
+by this principle cannot be replaced by mocks or contract inspection alone.
 
 Rationale: contract breadth without automated evidence creates a deceptively complete but unsafe MCP
 surface.
@@ -88,8 +97,11 @@ N-central installations.
   condition documented in the feature plan.
 - Public behavior, configuration, tool counts, write classifications, and known API quirks MUST be
   updated in the same change that alters them.
-- Test fixtures MUST use synthetic hosts, identifiers, and credentials. Live-system verification, if
-  performed, MUST be optional, isolated from CI, and recorded without sensitive output.
+- Automated test fixtures MUST use synthetic hosts, identifiers, and credentials. Required one-off
+  live verification for N-central-facing code changes MUST use a maintainer-provided temporary token,
+  remain isolated from CI, avoid persistent tenant-derived fixtures, and record only redacted
+  structural outcomes. Documentation-only, specification-only, test-only, and internal refactors that
+  cannot change upstream or public MCP execution do not require a live token.
 
 ## Delivery Workflow and Quality Gates
 
@@ -101,16 +113,20 @@ N-central installations.
    OpenAPI operations, implementation tasks, and tests MUST remain traceable to one another.
 4. Implement in test-first increments. Run Spec Kit analysis before implementation and convergence
    after implementation until no required work remains.
-5. Update the API coverage report whenever the OpenAPI source or endpoint implementation changes.
+5. For every N-central-facing behavior change, obtain a temporary test token from a maintainer after
+   deterministic checks pass, perform the required one-off live verification, and retain a redacted
+   summary. The pull request MUST NOT merge until this gate passes or every unexecuted scenario is
+   outside the change's applicable behavior.
+6. Update the API coverage report whenever the OpenAPI source or endpoint implementation changes.
    The report MUST be reproducible from repository evidence and MUST distinguish full, partial, and
    absent behavior.
-6. Review open automated dependency updates before a planned release. Compatible, verified updates
+7. Review open automated dependency updates before a planned release. Compatible, verified updates
    MAY be consolidated into the release pull request; unrelated, breaking, or unverified updates MUST
    remain separate. The release version changes only after feature, documentation, dependency, and
    test gates pass.
-7. A pull request is merge-ready only when its Spec Kit artifacts agree, required coverage is
-   implemented, documentation is current, all mandatory checks pass, and security-sensitive changes
-   have explicit reviewer attention.
+8. A pull request is merge-ready only when its Spec Kit artifacts agree, required coverage is
+   implemented, documentation is current, all mandatory checks pass, applicable one-off live
+   verification is recorded, and security-sensitive changes have explicit reviewer attention.
 
 ## Governance
 
@@ -129,4 +145,4 @@ review MUST verify applicable principles and quality gates. Exceptions MUST be d
 relevant specification or plan with an owner, risk statement, expiration condition, and follow-up
 task; security isolation and secret-handling requirements cannot be waived.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-12 | **Last Amended**: 2026-09-12
+**Version**: 1.2.0 | **Ratified**: 2026-09-12 | **Last Amended**: 2026-09-13

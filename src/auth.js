@@ -13,9 +13,10 @@
 /** @typedef {import('./context.js').TenantContext} TenantContext */
 
 import { MULTI_TENANT } from './context.js';
+import { configuredNumber } from './config.js';
 
 const AUTH_TIMEOUT_MS = 15_000;
-const MAX_TENANTS = Number(process.env.NC_MAX_TENANTS) || 1000;
+const MAX_TENANTS = configuredNumber('NC_MAX_TENANTS', 1000, { minimum: 1, integer: true });
 const QUIET = process.env.MCP_QUIET === '1';
 
 function parseExpiryToMs(str) {
@@ -145,7 +146,7 @@ function exchangeJwt(entry) {
       entry.accessToken = data.tokens.access.token;
       entry.refreshToken = data.tokens.refresh.token;
       entry.tokenExpiry = Date.now() + TOKEN_LIFETIME_MS;
-      if (!QUIET) console.error(`Authenticated with N-central at ${entry.fqdn}`);
+      if (!QUIET) console.error('Authenticated with N-central');
     } catch (err) {
       if (err.name === 'AbortError') throw new Error(`Auth timed out (${AUTH_TIMEOUT_MS}ms)`, { cause: err });
       throw err;
@@ -172,9 +173,14 @@ function refreshAccessToken(entry) {
     const timer = setTimeout(() => ac.abort(), AUTH_TIMEOUT_MS);
 
     try {
+      const headers = { 'Content-Type': 'text/plain', Accept: 'application/json' };
+      if (NC_ACCESS_EXPIRY) headers['X-ACCESS-EXPIRY-OVERRIDE'] = NC_ACCESS_EXPIRY;
+      if (NC_REFRESH_EXPIRY) headers['X-REFRESH-EXPIRY-OVERRIDE'] = NC_REFRESH_EXPIRY;
+
       const res = await fetch(`${entry.fqdn}/api/auth/refresh`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${entry.refreshToken}`, 'Content-Type': 'application/json' },
+        headers,
+        body: entry.refreshToken,
         signal: ac.signal,
       });
 

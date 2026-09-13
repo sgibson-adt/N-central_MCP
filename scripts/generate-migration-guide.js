@@ -15,6 +15,7 @@ const lines = [
   '- Curated tools return `structuredContent` plus a readable text fallback.',
   '- Automatic pagination is bounded to 20 pages and 10,000 records; results are bounded to 256 KiB.', '',
   'To stage migration, set `NC_TOOLSETS=core,compatibility`. Write and destructive aliases still require `NC_WRITE_MODE=write` or `full`.', '',
+  'Removed names are never advertised in any write mode. `list_custom_psa_tickets` is removed because its upstream route is a navigation link index; use `get_psa_ticket` with a known identifier.', '',
   '## Inventory', '',
   `The reviewed 87-name inventory contains ${counts.retained?.length || 0} retained, ${counts.consolidated?.length || 0} consolidated/deprecated, and ${counts.removed?.length || 0} removed names.`, '',
   '| 2.x name | Disposition | Preferred replacement | Compatibility name | Behavior change or rationale |',

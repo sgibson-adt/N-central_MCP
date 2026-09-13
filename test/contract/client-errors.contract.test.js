@@ -14,16 +14,36 @@ before(async () => {
 afterEach(() => boundary?.restore());
 
 describe('client error contract', () => {
-  it('retries an idempotent GET once but never retries POST on 500', async () => {
-    let getAttempts = 0;
+  it('honors an explicit zero retry configuration', async () => {
+    process.env.NC_MAX_RETRIES = '0';
+    process.env.NC_RETRY_DELAY_MS = '1';
+    const zeroRetryClient = await import(`../../src/client.js?zero-retries=${Date.now()}`);
+    delete process.env.NC_MAX_RETRIES;
+    delete process.env.NC_RETRY_DELAY_MS;
     boundary = installContractFetch({ responder(call) {
-      if (call.path === '/api/retry' && getAttempts++ === 0) return errorResponse(500);
-      if (call.path === '/api/no-retry') return errorResponse(500);
+      return call.path === '/api/no-retries' ? errorResponse(500) : null;
+    } });
+    await assert.rejects(withSyntheticTenant(syntheticTenant('zero-retry'), () => zeroRetryClient.apiGet('/api/no-retries')), /Server error 500/);
+    assert.equal(boundary.calls.filter(({ path }) => path === '/api/no-retries').length, 1);
+  });
+
+  it('retries every transient 5xx for replay-safe methods but never retries POST', async () => {
+    const attempts = new Map();
+    boundary = installContractFetch({ responder(call) {
+      const match = call.path.match(/^\/api\/retry-(500|502|503|504)$/);
+      if (match) {
+        const count = attempts.get(call.path) || 0;
+        attempts.set(call.path, count + 1);
+        if (count === 0) return errorResponse(Number(match[1]));
+      }
+      if (call.path === '/api/no-retry') return errorResponse(502);
       return jsonResponse({ ok: true });
     } });
-    await withSyntheticTenant(syntheticTenant('retry'), () => client.apiGet('/api/retry'));
-    await assert.rejects(withSyntheticTenant(syntheticTenant('post'), () => client.apiPost('/api/no-retry', {})), /Server error 500/);
-    assert.equal(boundary.calls.filter((c) => c.path === '/api/retry').length, 2);
+    for (const status of [500, 502, 503, 504]) {
+      await withSyntheticTenant(syntheticTenant(`retry-${status}`), () => client.apiGet(`/api/retry-${status}`));
+      assert.equal(boundary.calls.filter((c) => c.path === `/api/retry-${status}`).length, 2);
+    }
+    await assert.rejects(withSyntheticTenant(syntheticTenant('post'), () => client.apiPost('/api/no-retry', {})), /Server error 502/);
     assert.equal(boundary.calls.filter((c) => c.path === '/api/no-retry').length, 1);
   });
 
@@ -32,11 +52,13 @@ describe('client error contract', () => {
     boundary = installContractFetch({ responder(call) {
       if (call.path === '/api/throttle' && !throttled) { throttled = true; return errorResponse(429); }
       if (call.path === '/api/wrapped') return jsonResponse({ 'error message': 'tenant detail' });
+      if (call.path === '/api/wrapped-case') return jsonResponse({ 'Error Message': 'tenant detail' });
       if (call.path === '/api/text') return textResponse('plain response');
       return jsonResponse({ ok: true });
     } });
     assert.deepEqual(await withSyntheticTenant(syntheticTenant('throttle'), () => client.apiPost('/api/throttle', {})), { ok: true });
     await assert.rejects(withSyntheticTenant(syntheticTenant('wrapped'), () => client.apiGet('/api/wrapped')), /API error in 200 response/);
+    await assert.rejects(withSyntheticTenant(syntheticTenant('wrapped-case'), () => client.apiGet('/api/wrapped-case')), /API error in 200 response/);
     assert.equal(await withSyntheticTenant(syntheticTenant('text'), () => client.apiGet('/api/text')), 'plain response');
   });
 

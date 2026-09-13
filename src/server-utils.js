@@ -27,12 +27,26 @@ export function safeCompare(a, b) {
  * @returns {z.ZodTypeAny}
  */
 export function jsonSchemaToZod(prop) {
+  const alternatives = prop.anyOf || prop.oneOf;
+  if (Array.isArray(alternatives) && alternatives.length > 0) {
+    const { anyOf: _anyOf, oneOf: _oneOf, description: _description, default: _default, ...base } = prop;
+    const members = alternatives.map((alternative) => jsonSchemaToZod({ ...base, ...alternative }));
+    let union = members.length === 1 ? members[0] : z.union(/** @type {any} */ (members));
+    if (prop.description) union = union.describe(prop.description);
+    if (Object.hasOwn(prop, 'default')) union = union.default(prop.default);
+    return union;
+  }
   if (Array.isArray(prop.type)) {
     const members = prop.type.map((type) => jsonSchemaToZod({ ...prop, type }));
-    return members.length === 1 ? members[0] : z.union(/** @type {any} */ (members));
+    let union = members.length === 1 ? members[0] : z.union(/** @type {any} */ (members));
+    if (prop.description) union = union.describe(prop.description);
+    if (Object.hasOwn(prop, 'default')) union = union.default(prop.default);
+    return union;
   }
   let schema;
-  switch (prop.type) {
+  if (Object.hasOwn(prop, 'const')) {
+    schema = z.literal(prop.const);
+  } else switch (prop.type) {
     case 'number':
       schema = z.number();
       break;
@@ -41,6 +55,9 @@ export function jsonSchemaToZod(prop) {
       break;
     case 'boolean':
       schema = z.boolean();
+      break;
+    case 'null':
+      schema = z.null();
       break;
     case 'array': {
       schema = z.array(prop.items ? jsonSchemaToZod(prop.items) : z.string());
@@ -93,6 +110,7 @@ export function jsonSchemaToZod(prop) {
     });
   }
   if (prop.description) schema = schema.describe(prop.description);
+  if (Object.hasOwn(prop, 'default')) schema = schema.default(prop.default);
   return schema;
 }
 

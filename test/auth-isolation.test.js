@@ -174,7 +174,11 @@ describe('multi-tenant auth isolation', () => {
       await auth.getAccessToken(ctxA);
       now += 600;
       await auth.getAccessToken(ctxA);
-      assert.equal(active.calls.filter((c) => c.path === '/api/auth/refresh').length, 1);
+      const refreshes = active.calls.filter((c) => c.path === '/api/auth/refresh');
+      assert.equal(refreshes.length, 1);
+      assert.equal(refreshes[0].body, 'ref:jwtA');
+      assert.equal(refreshes[0].contentType, 'text/plain');
+      assert.equal(refreshes[0].bearer, '');
     } finally {
       Date.now = originalNow;
       auth.evictTenant(ctxA.key);

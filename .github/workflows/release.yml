@@ -33,15 +33,7 @@ jobs:
           TAG_VERSION="${TAG_NAME#v}"
           npm run version:check -- "$TAG_VERSION"
       - name: Run release gates
-        run: |
-          npm test
-          npm run coverage:api:check
-          npm run migration:check
-          npm run toolsets:check
-          npm run evaluation:check
-          npm run lint
-          npm run type-check
-          npm audit --audit-level=high
+        run: npm run release:check
 
   publish-image:
     name: Publish container image
@@ -102,6 +94,10 @@ jobs:
           IMAGE_DIGEST: ${{ needs.publish-image.outputs.digest }}
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [[ ! "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "Published image did not return an immutable sha256 digest" >&2
+            exit 1
+          fi
           RELEASE_NOTES="Container image: ghcr.io/${GITHUB_REPOSITORY}:${TAG_VERSION}
           Immutable digest: ${IMAGE_DIGEST}"
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then

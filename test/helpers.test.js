@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { isToolAllowed, buildToolAnnotations } from '../src/tool-registry.js';
 import { unwrap, mapConcurrent, toCsv } from '../src/paginator.js';
 import { paginationArgs } from '../src/shared.js';
+import { sanitizePathParam } from '../src/client.js';
 
 // ---------------------------------------------------------------------------
 // tool-registry: isToolAllowed
@@ -116,19 +117,19 @@ describe('mapConcurrent', () => {
 });
 
 // ---------------------------------------------------------------------------
-// shared: paginationArgs clamping
+// shared: paginationArgs validation
 // ---------------------------------------------------------------------------
 describe('paginationArgs', () => {
-  it('clamps pageSize above 1000 to 1000', () => {
-    assert.equal(paginationArgs({ pageSize: 5000 }).pageSize, 1000);
+  it('rejects pageSize above 1000', () => {
+    assert.throws(() => paginationArgs({ pageSize: 5000 }), /pageSize/);
   });
-  it('clamps pageSize below 1 to 1', () => {
-    assert.equal(paginationArgs({ pageSize: 0 }).pageSize, 1);
-    assert.equal(paginationArgs({ pageSize: -10 }).pageSize, 1);
+  it('rejects pageSize below 1 for positive-only operations', () => {
+    assert.throws(() => paginationArgs({ pageSize: 0 }), /pageSize/);
+    assert.throws(() => paginationArgs({ pageSize: -10 }), /pageSize/);
   });
-  it('clamps pageNumber below 1 to 1', () => {
-    assert.equal(paginationArgs({ pageNumber: 0 }).pageNumber, 1);
-    assert.equal(paginationArgs({ pageNumber: -5 }).pageNumber, 1);
+  it('rejects pageNumber below 1', () => {
+    assert.throws(() => paginationArgs({ pageNumber: 0 }), /pageNumber/);
+    assert.throws(() => paginationArgs({ pageNumber: -5 }), /pageNumber/);
   });
   it('passes through valid values', () => {
     const out = paginationArgs({ pageSize: 100, pageNumber: 3, sortBy: 'name' });
@@ -140,6 +141,13 @@ describe('paginationArgs', () => {
     const out = paginationArgs({});
     assert.equal(out.pageSize, undefined);
     assert.equal(out.pageNumber, undefined);
+  });
+});
+
+describe('sanitizePathParam', () => {
+  it('rejects nullish path identifiers before network I/O', () => {
+    assert.throws(() => sanitizePathParam(null), /Path parameter/);
+    assert.throws(() => sanitizePathParam(undefined), /Path parameter/);
   });
 });
 

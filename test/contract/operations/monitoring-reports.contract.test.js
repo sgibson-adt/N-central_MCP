@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 
 import { installContractFetch, syntheticTenant, withSyntheticTenant } from '../fixtures.js';
 import { listDeviceScheduledTasks, getScheduledTask, getScheduledTaskStatus } from '../../../src/operations/scheduled-tasks.js';
-import { getReport, listActiveIssues, listDeviceFilters } from '../../../src/operations/reports.js';
+import {
+  getReport, listActiveIssues, listDeviceFilters, reportAllUsersByServiceOrg,
+  reportCustomerSiteSummary, reportOrgHierarchy,
+} from '../../../src/operations/reports.js';
 
 let boundary;
 afterEach(() => boundary?.restore());
@@ -12,7 +15,10 @@ describe('monitoring, scheduled-task, and report adapters', () => {
   it('routes active issue and device-filter search inputs', async () => {
     boundary = installContractFetch();
     await withSyntheticTenant(syntheticTenant('monitoring'), async () => {
-      await listActiveIssues('8', { pageSize: -1, select: 'severity==critical' });
+      await listActiveIssues('8', { pageSize: 1, select: 'severity==critical' });
+      const callsBeforeInvalid = boundary.calls.length;
+      await assert.rejects(() => listActiveIssues('8', { pageSize: -1 }), /pageSize/);
+      assert.equal(boundary.calls.length, callsBeforeInvalid);
       await listDeviceFilters({ viewScope: 'OWN_AND_USED', pageNumber: 2 });
     });
     const calls = boundary.calls.slice(1);
@@ -35,5 +41,35 @@ describe('monitoring, scheduled-task, and report adapters', () => {
       '/api/devices/dev-1/scheduled-tasks', '/api/scheduled-tasks/task-1',
       '/api/scheduled-tasks/task-1/status', '/api/scheduled-tasks/task-1/status/details', '/api/report/report-1',
     ]);
+  });
+
+  it('returns a flat deduplicated user report across a service organization', async () => {
+    boundary = installContractFetch({ responder(call) {
+      if (call.path === '/api/service-orgs/1/customers') return new Response(JSON.stringify({ data: [{ customerId: 2 }], totalPages: 1 }), { headers: { 'content-type': 'application/json' } });
+      if (call.path === '/api/org-units/1/users') return new Response(JSON.stringify({ data: [{ userId: 10 }, { userId: 11 }], totalPages: 1 }), { headers: { 'content-type': 'application/json' } });
+      if (call.path === '/api/org-units/2/users') return new Response(JSON.stringify({ data: [{ userId: 11 }, { userId: 12 }], totalPages: 1 }), { headers: { 'content-type': 'application/json' } });
+      return null;
+    } });
+    const result = await withSyntheticTenant(syntheticTenant('user-report'), () => reportAllUsersByServiceOrg({ soId: 1 }));
+    assert.deepEqual(result.map(({ userId }) => userId), [10, 11, 12]);
+    assert.equal(result.some(Array.isArray), false);
+  });
+
+  it('uses detail records for scoped customer/site and service-org hierarchy reports', async () => {
+    boundary = installContractFetch({ responder(call) {
+      const bodies = {
+        '/api/customers/2': { customerId: 2, customerName: 'Synthetic Customer' },
+        '/api/customers/2/sites': { data: [{ siteId: 3 }], totalPages: 1 },
+        '/api/service-orgs/1': { soId: 1, soName: 'Synthetic Service Org' },
+        '/api/service-orgs/1/customers': { data: [{ customerId: 2 }], totalPages: 1 },
+      };
+      const body = bodies[call.path];
+      return body ? new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } }) : null;
+    } });
+    const [customerSummary, hierarchy] = await withSyntheticTenant(syntheticTenant('scoped-reports'), async () => Promise.all([
+      reportCustomerSiteSummary({ customerId: 2 }), reportOrgHierarchy({ soId: 1 }),
+    ]));
+    assert.deepEqual(customerSummary, [{ customer: { customerId: 2, customerName: 'Synthetic Customer' }, sites: [{ siteId: 3 }] }]);
+    assert.deepEqual(hierarchy, [{ serviceOrg: { soId: 1, soName: 'Synthetic Service Org' }, customers: [{ customerId: 2 }] }]);
   });
 });

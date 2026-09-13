@@ -1,0 +1,306 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/theonlytruebigmac/n-central-rest-api-mcp/specs/002-v3-release-readiness/contracts/release-readiness.schema.json",
+  "title": "N-central MCP Version 3 Release Readiness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "tag",
+    "contract",
+    "operationClosures",
+    "acceptedUnsupportedOperations",
+    "defaultCatalog",
+    "migration",
+    "provenance",
+    "requiredGates",
+    "deferredItems",
+    "artifacts"
+  ],
+  "properties": {
+    "version": {
+      "const": "3.0.0"
+    },
+    "tag": {
+      "const": "v3.0.0"
+    },
+    "contract": {
+      "$ref": "#/$defs/contract"
+    },
+    "operationClosures": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "$ref": "#/$defs/operationClosure"
+      }
+    },
+    "acceptedUnsupportedOperations": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(GET|POST|PUT|PATCH|DELETE) /api(?:/.*)?$"
+      }
+    },
+    "defaultCatalog": {
+      "const": [
+        "get_server_status",
+        "validate_session",
+        "get_current_user",
+        "search_organizations",
+        "get_organization_context",
+        "search_devices",
+        "get_device_context",
+        "list_active_issues",
+        "list_device_scheduled_tasks",
+        "get_scheduled_task_context",
+        "run_report",
+        "list_job_statuses"
+      ]
+    },
+    "migration": {
+      "$ref": "#/$defs/migration"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "requiredGates": {
+      "type": "array",
+      "minItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 3,
+        "pattern": "^[a-z][a-z0-9-]+$"
+      }
+    },
+    "deferredItems": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/deferredItem"
+      }
+    },
+    "artifacts": {
+      "$ref": "#/$defs/artifacts"
+    }
+  },
+  "$defs": {
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "openapiVersion",
+        "title",
+        "contractVersion",
+        "pathCount",
+        "operationCount"
+      ],
+      "properties": {
+        "path": {
+          "const": "test/openapi-spec.json"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "openapiVersion": {
+          "const": "3.0.1"
+        },
+        "title": {
+          "const": "N-central API-Service"
+        },
+        "contractVersion": {
+          "const": "1.0"
+        },
+        "pathCount": {
+          "const": 84
+        },
+        "operationCount": {
+          "const": 104
+        }
+      }
+    },
+    "operationClosure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operationKey",
+        "baselineStatus",
+        "resolution",
+        "decision",
+        "evidence"
+      ],
+      "properties": {
+        "operationKey": {
+          "type": "string",
+          "pattern": "^GET /api/"
+        },
+        "baselineStatus": {
+          "const": "partially-implemented"
+        },
+        "resolution": {
+          "enum": [
+            "implemented",
+            "excluded"
+          ]
+        },
+        "decision": {
+          "type": "string",
+          "minLength": 20
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          }
+        }
+      }
+    },
+    "migration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "legacyNameCount",
+        "retained",
+        "consolidated",
+        "removed"
+      ],
+      "properties": {
+        "legacyNameCount": {
+          "const": 87
+        },
+        "retained": {
+          "const": 53
+        },
+        "consolidated": {
+          "const": 31
+        },
+        "removed": {
+          "const": 3
+        }
+      }
+    },
+    "provenanceFact": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "value"
+          ],
+          "properties": {
+            "status": {
+              "const": "known"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "unavailable"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 10
+            }
+          }
+        }
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceUrl",
+        "retrievedAt",
+        "productVersion",
+        "repositoryReceipt"
+      ],
+      "properties": {
+        "sourceUrl": {
+          "$ref": "#/$defs/provenanceFact"
+        },
+        "retrievedAt": {
+          "$ref": "#/$defs/provenanceFact"
+        },
+        "productVersion": {
+          "$ref": "#/$defs/provenanceFact"
+        },
+        "repositoryReceipt": {
+          "$ref": "#/$defs/provenanceFact"
+        }
+      }
+    },
+    "deferredItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "classification",
+        "rationale"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 3,
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "classification": {
+          "enum": [
+            "additive-3.x",
+            "security-specification",
+            "compatibility-design"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 20
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "architectures",
+        "immutableDigestRequired",
+        "generatedReleaseNotes"
+      ],
+      "properties": {
+        "architectures": {
+          "const": [
+            "linux/amd64",
+            "linux/arm64"
+          ]
+        },
+        "immutableDigestRequired": {
+          "const": true
+        },
+        "generatedReleaseNotes": {
+          "const": true
+        }
+      }
+    }
+  }
+}

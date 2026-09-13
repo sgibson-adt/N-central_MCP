@@ -8,7 +8,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { sanitizePathParam } from '../src/client.js';
 import { toCsv } from '../src/paginator.js';
-import { auditLog } from '../src/logging.js';
+import { auditErrorMetadata, auditInputKeys, auditLog, sanitizeLogString } from '../src/logging.js';
 import { deduplicateUsers, buildDeviceCountByOrg } from '../src/operations/reports.js';
 
 describe('sanitizePathParam', () => {
@@ -68,15 +68,94 @@ describe('toCsv', () => {
 });
 
 describe('auditLog', () => {
-  it('handles normal objects', () => assert.doesNotThrow(() => auditLog('test', { tool: 'foo' })));
+  it('handles normal objects', () => assert.doesNotThrow(() => auditLog('tool_call', { tool: 'foo' })));
   it('handles circular refs', () => {
     const obj = { a: 1 };
     obj.self = obj;
-    assert.doesNotThrow(() => auditLog('test', { data: obj }));
+    assert.doesNotThrow(() => auditLog('tool_call', { data: obj }));
   });
-  it('handles BigInt', () => assert.doesNotThrow(() => auditLog('test', { n: 9007199254740991n })));
-  it('redacts sensitive fields', () => assert.doesNotThrow(() => auditLog('test', { args: { token: 'x', password: 'y' } })));
-  it('handles array args', () => assert.doesNotThrow(() => auditLog('test', { args: [{ token: 'x' }] })));
+  it('handles BigInt', () => assert.doesNotThrow(() => auditLog('tool_call', { durationMs: 9007199254740991n })));
+  it('drops fields outside each event contract instead of relying on key-name heuristics', () => {
+    const originalError = console.error;
+    const messages = [];
+    console.error = (message) => messages.push(String(message));
+    try {
+      auditLog('sensitive_tool_call', {
+        tool: 'update_device',
+        inputKeys: ['deviceId', 'password'],
+        args: { innocentLookingField: 'tenant-private-value' },
+        error: 'upstream-private-prose',
+      });
+    } finally {
+      console.error = originalError;
+    }
+    assert.equal(messages.length, 1);
+    assert.doesNotMatch(messages[0], /tenant-private-value|upstream-private-prose|password/);
+    assert.match(messages[0], /deviceId/);
+  });
+  it('classifies errors without retaining messages or custom names', () => {
+    const error = new Error('customer 12345 on https://tenant.example.test failed');
+    error.name = 'TenantSpecificFailure';
+    error.status = 503;
+    assert.deepEqual(auditErrorMetadata(error), { errorType: 'Error', status: 503 });
+    assert.deepEqual(auditErrorMetadata('private rejection'), { errorType: 'NonErrorThrown' });
+  });
+  it('records bounded argument names but never argument values or sensitive key names', () => {
+    assert.deepEqual(
+      auditInputKeys({ pageSize: 10, deviceId: 'private', password: 'private', 'bad key': true }),
+      ['deviceId', 'pageSize'],
+    );
+  });
+  it('uses one shared string sanitizer for audit and public tool errors', () => {
+    const sanitized = sanitizeLogString(
+      'API error 404 on GET /api/customers/12345/sites/67890: private detail',
+    );
+    assert.doesNotMatch(sanitized, /12345|67890|private detail/);
+    assert.match(sanitized, /\/api\/customers\/\{id\}\/sites\/\{id\}/);
+  });
+  it('redacts resolved identifiers from audited API paths', () => {
+    const originalError = console.error;
+    const messages = [];
+    console.error = (message) => messages.push(String(message));
+    try {
+      auditLog('api_retry', { method: 'GET', path: '/api/customers/12345/sites/67890', status: 500 });
+    } finally {
+      console.error = originalError;
+    }
+    assert.equal(messages.length, 1);
+    assert.doesNotMatch(messages[0], /12345|67890/);
+    assert.match(messages[0], /\/api\/customers\/\{id\}\/sites\/\{id\}/);
+  });
+  it('redacts top-level tenant identity fields', () => {
+    const originalError = console.error;
+    const messages = [];
+    console.error = (message) => messages.push(String(message));
+    try {
+      auditLog('session_init', { fqdn: 'https://tenant.example.test', tenant: 'tenant-key' });
+    } finally {
+      console.error = originalError;
+    }
+    assert.equal(messages.length, 1);
+    assert.doesNotMatch(messages[0], /tenant\.example\.test|tenant-key/);
+    assert.match(messages[0], /\[REDACTED\]/);
+  });
+  it('redacts session, client address, and identifiers embedded in error text', () => {
+    const originalError = console.error;
+    const messages = [];
+    console.error = (message) => messages.push(String(message));
+    try {
+      auditLog('tool_error', {
+        sessionId: 'session-private',
+        ip: '192.0.2.44',
+        error: 'API error 404 on GET /api/customers/12345/sites/67890: private detail',
+      });
+    } finally {
+      console.error = originalError;
+    }
+    assert.equal(messages.length, 1);
+    assert.doesNotMatch(messages[0], /session-private|192\.0\.2\.44|12345|67890|private detail/);
+    assert.doesNotMatch(messages[0], /"error"|"sessionId"|"ip"/);
+  });
 });
 
 // ---------------------------------------------------------------------------

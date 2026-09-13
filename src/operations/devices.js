@@ -2,7 +2,9 @@
 /** Contract-shaped device read adapters. */
 
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, sanitizePathParam } from '../client.js';
-import { fetchOrPaginate, PAGINATION_POLICIES } from '../shared.js';
+import { fetchOrPaginate, fetchOrSearchByName, PAGINATION_POLICIES } from '../shared.js';
+
+const DEVICE_NAME_FIELDS = Object.freeze(['longName', 'discoveredName', 'deviceName', 'name']);
 
 /** @param {Record<string, any>} [args] */
 export function searchDevices(args = {}) {
@@ -10,7 +12,7 @@ export function searchDevices(args = {}) {
     ? '/api/devices'
     : `/api/org-units/${sanitizePathParam(args.orgUnitId)}/devices`;
   const base = args.filterId == null ? {} : { filterId: args.filterId };
-  return fetchOrPaginate(path, base, args, PAGINATION_POLICIES.allowAll);
+  return fetchOrSearchByName(path, base, args, DEVICE_NAME_FIELDS, PAGINATION_POLICIES.allowAll);
 }
 
 /** @param {string | number} deviceId */
@@ -21,8 +23,10 @@ export const getDeviceStatus = (deviceId) => apiGet(`/api/devices/${sanitizePath
 export const getDeviceAssets = (deviceId) => apiGet(`/api/devices/${sanitizePathParam(deviceId)}/assets`);
 /** @param {string | number} deviceId */
 export const getDeviceLifecycle = (deviceId) => apiGet(`/api/devices/${sanitizePathParam(deviceId)}/assets/lifecycle-info`);
-/** @param {string | number} deviceId */
-export const listDeviceNotes = (deviceId) => apiGet(`/api/devices/${sanitizePathParam(deviceId)}/notes`);
+/** @param {string | number} deviceId @param {Record<string, any>} [args] */
+export const listDeviceNotes = (deviceId, args = {}) => fetchOrPaginate(
+  `/api/devices/${sanitizePathParam(deviceId)}/notes`, {}, args, PAGINATION_POLICIES.allowAll,
+);
 export const createDevice = (body) => apiPost('/api/device', body);
 export const deleteDevice = (deviceId, removeAgents) => apiDelete(
   `/api/devices/${sanitizePathParam(deviceId)}`,

@@ -2,6 +2,8 @@
  * Tool-registration helpers. Pure functions only — no I/O, no globals.
  */
 
+import { sanitizeLogString } from './logging.js';
+
 export const COMPOSITION_LIMITS = Object.freeze({
   calls: 10,
   concurrency: 5,
@@ -24,17 +26,9 @@ export function isSensitiveTool(tool) {
   return tool.writeScope !== 'read' || EXPLICIT_SENSITIVE_TOOLS.has(tool.name);
 }
 
-const SECRET_PATTERNS = [
-  new RegExp('Bearer\\s+[A-Za-z0-9._~+/-]+', 'gi'),
-  /https?:\/\/[^\s/]+/gi,
-  /(?:access|refresh|jwt|password|credential)[_-]?(?:token)?\s*[:=]\s*[^\s,;]+/gi,
-];
-
 /** @param {unknown} message */
 export function sanitizeToolError(message) {
-  let text = String(message ?? 'Unknown upstream error');
-  text = text.replace(/^(API error \d+ on [A-Z]+ [^:]+):.*$/i, '$1');
-  for (const pattern of SECRET_PATTERNS) text = text.replace(pattern, '[REDACTED]');
+  const text = sanitizeLogString(String(message ?? 'Unknown upstream error'));
   return text.length > 300 ? `${text.slice(0, 300)}...` : text;
 }
 

@@ -1,11 +1,12 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { installContractFetch, syntheticTenant, withSyntheticTenant } from '../fixtures.js';
+import { installContractFetch, jsonResponse, syntheticTenant, withSyntheticTenant } from '../fixtures.js';
 import {
   getOrganization, getOrganizationLimits, listOrganizationChildren,
   listOrganizationCustomProperties, searchOrganizations,
 } from '../../../src/operations/organizations.js';
+import { coreTools } from '../../../src/tools/core.js';
 
 let boundary;
 afterEach(() => boundary?.restore());
@@ -34,6 +35,40 @@ describe('organization operation adapters', () => {
     assert.equal(calls[2].query.pageSize, '1000');
   });
 
+  it('finds organizations by canonical human name across bounded pages', async () => {
+    boundary = installContractFetch({ responder(call) {
+      if (call.path !== '/api/service-orgs/256/customers') return null;
+      return call.query.pageNumber === '1'
+        ? jsonResponse({
+          data: [
+            { customerId: 1, customerName: 'Freedom Pharmaceuticals' },
+            { customerId: 2, customerName: 'Synthetic Customer' },
+          ],
+          totalPages: 2,
+        })
+        : jsonResponse({ data: [{ customerId: 3, customerName: ' freedom   pharmaceuticals ' }], totalPages: 2 });
+    } });
+
+    const matches = await withSyntheticTenant(syntheticTenant('organization-name'), () =>
+      searchOrganizations('customer', {
+        parentId: 256, name: 'FREEDOM PHARMACEUTICALS', nameMatch: 'exact', select: 'parentId==256',
+        sortBy: 'customerName', sortOrder: 'asc',
+      }));
+    assert.deepEqual(matches.map(({ customerId }) => customerId), [1, 3]);
+    const calls = boundary.calls.filter((call) => call.path === '/api/service-orgs/256/customers');
+    assert.deepEqual(calls.map(({ query }) => query), [
+      { pageNumber: '1', pageSize: '1000', select: 'parentId==256', sortBy: 'customerName', sortOrder: 'asc' },
+      { pageNumber: '2', pageSize: '1000', select: 'parentId==256', sortBy: 'customerName', sortOrder: 'asc' },
+    ]);
+
+    const callsBeforeInvalid = boundary.calls.length;
+    await assert.rejects(
+      () => searchOrganizations('customer', { name: 'Freedom', pageSize: 50 }),
+      /name search.*pageSize/i,
+    );
+    assert.equal(boundary.calls.length, callsBeforeInvalid);
+  });
+
   it('routes typed detail and org-unit children reads', async () => {
     const calls = await capture(async () => {
       await getOrganization('service-org', '1');
@@ -49,5 +84,24 @@ describe('organization operation adapters', () => {
       '/api/org-units/4/children', '/api/org-units/4/limits', '/api/org-units/4/custom-properties',
     ]);
     assert.equal(calls[4].query.pageNumber, '2');
+  });
+
+  it('preserves customer-site query fields and rejects invalid pages before I/O', async () => {
+    assert.match(coreTools.find(({ name }) => name === 'search_organizations').description, /PREVIEW/);
+    const calls = await capture(async () => {
+      await searchOrganizations('site', {
+        parentId: 20, pageNumber: 2, pageSize: -1, select: 'name==Branch',
+        sortBy: 'name', sortOrder: 'desc',
+      });
+      const callsBeforeInvalid = boundary.calls.length;
+      await assert.rejects(
+        () => searchOrganizations('site', { parentId: 20, pageNumber: 0 }),
+        /pageNumber/,
+      );
+      assert.equal(boundary.calls.length, callsBeforeInvalid);
+    });
+    assert.deepEqual(calls[0].query, {
+      pageNumber: '2', pageSize: '-1', select: 'name==Branch', sortBy: 'name', sortOrder: 'desc',
+    });
   });
 });

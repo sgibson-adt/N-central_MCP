@@ -136,6 +136,42 @@ describe('jsonSchemaToZod', () => {
     const desc = schema._def?.description ?? schema.description;
     assert.equal(desc, 'A name');
   });
+
+  it('preserves nullable types, constants, alternatives, and defaults', () => {
+    const nullable = jsonSchemaToZod({ type: ['string', 'null'] });
+    assert.equal(nullable.safeParse('value').success, true);
+    assert.equal(nullable.safeParse(null).success, true);
+
+    const constant = jsonSchemaToZod({ const: -1 });
+    assert.equal(constant.safeParse(-1).success, true);
+    assert.equal(constant.safeParse(1).success, false);
+
+    const alternative = jsonSchemaToZod({
+      type: 'integer',
+      anyOf: [{ const: -1 }, { minimum: 1, maximum: 1000 }],
+    });
+    assert.equal(alternative.safeParse(-1).success, true);
+    assert.equal(alternative.safeParse(1).success, true);
+    assert.equal(alternative.safeParse(1000).success, true);
+    assert.equal(alternative.safeParse(0).success, false);
+    assert.equal(alternative.safeParse(1001).success, false);
+
+    const defaulted = jsonSchemaToZod({ type: 'string', default: 'contains' });
+    assert.equal(defaulted.parse(undefined), 'contains');
+  });
+
+  it('preserves closed-object semantics inside alternatives', () => {
+    const schema = jsonSchemaToZod({
+      anyOf: [{
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
+        additionalProperties: false,
+      }],
+    });
+    assert.equal(schema.safeParse({ id: '1' }).success, true);
+    assert.equal(schema.safeParse({ id: '1', unexpected: true }).success, false);
+  });
 });
 
 // ---------------------------------------------------------------------------

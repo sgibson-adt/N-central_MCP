@@ -5,10 +5,11 @@ import { getAccessToken, reAuthenticate } from './auth.js';
 import { getContext, MULTI_TENANT } from './context.js';
 import { auditLog } from './logging.js';
 import { inc } from './metrics.js';
+import { configuredNumber } from './config.js';
 
-const MAX_RETRIES = Number(process.env.NC_MAX_RETRIES) || 3;
-const RETRY_DELAY_MS = Number(process.env.NC_RETRY_DELAY_MS) || 2000;
-const TIMEOUT_MS = Number(process.env.NC_REQUEST_TIMEOUT_MS) || 30_000;
+const MAX_RETRIES = configuredNumber('NC_MAX_RETRIES', 3, { integer: true });
+const RETRY_DELAY_MS = configuredNumber('NC_RETRY_DELAY_MS', 2000);
+const TIMEOUT_MS = configuredNumber('NC_REQUEST_TIMEOUT_MS', 30_000, { minimum: 1 });
 
 /** @typedef {'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD'} HttpMethod */
 
@@ -24,6 +25,7 @@ const IDEMPOTENT_METHODS = new Set(['GET', 'PUT', 'DELETE', 'HEAD']);
  * @throws {Error}
  */
 export function sanitizePathParam(value) {
+  if (value == null) throw new Error('Path parameter must not be null or undefined');
   const str = String(value);
   if (!str.length) throw new Error('Path parameter must not be empty');
   if (
@@ -93,17 +95,20 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
 
     if (res.status === 429) {
       if (attempt < MAX_RETRIES) {
+        await discardResponse(res);
         const delay = RETRY_DELAY_MS * 2 ** attempt;
         auditLog('api_retry', { method, path: stripQuery(path), status: 429, attempt: attempt + 1, delayMs: delay });
         inc('nc_mcp_api_retries_total', { reason: '429' });
         await sleep(delay);
         continue;
       }
+      await discardResponse(res);
       throw new Error('Rate limited (429) after retries');
     }
 
     if (res.status === 401) {
       if (attempt < MAX_RETRIES) {
+        await discardResponse(res);
         const delay = attempt > 0 ? RETRY_DELAY_MS * 2 ** (attempt - 1) : 0;
         auditLog('api_retry', { method, path: stripQuery(path), status: 401, attempt: attempt + 1, delayMs: delay });
         inc('nc_mcp_api_retries_total', { reason: '401' });
@@ -111,17 +116,20 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
         if (delay) await sleep(delay);
         continue;
       }
+      await discardResponse(res);
       throw new Error('Unauthorized (401) after re-auth');
     }
 
-    if (res.status === 500 || res.status === 503) {
+    if (res.status >= 500 && res.status <= 599) {
       if (attempt < MAX_RETRIES && canRetryTransient) {
+        await discardResponse(res);
         const delay = RETRY_DELAY_MS * 2 ** attempt;
         auditLog('api_retry', { method, path: stripQuery(path), status: res.status, attempt: attempt + 1, delayMs: delay });
         inc('nc_mcp_api_retries_total', { reason: String(res.status) });
         await sleep(delay);
         continue;
       }
+      await discardResponse(res);
       throw new Error(`Server error ${res.status} on ${method} ${stripQuery(path)}`);
     }
 
@@ -150,9 +158,14 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
       throw new Error(`Invalid JSON from ${method} ${stripQuery(path)}: ${truncate(text, 120)}`);
     }
 
-    // N-central wraps some errors as `error message` inside 200 responses.
-    if (data?.['error message']) {
-      const detail = MULTI_TENANT ? '' : `: ${truncate(data['error message'], 200)}`;
+    // N-central wraps some errors as an `error message` property inside 200
+    // responses. Deployments have emitted different capitalization, so match
+    // the documented field name case-insensitively.
+    const wrappedErrorEntry = data && typeof data === 'object' && !Array.isArray(data)
+      ? Object.entries(data).find(([key]) => key.trim().toLowerCase() === 'error message')
+      : undefined;
+    if (wrappedErrorEntry) {
+      const detail = MULTI_TENANT ? '' : `: ${truncate(wrappedErrorEntry[1], 200)}`;
       throw new Error(`API error in 200 response${detail}`);
     }
 
@@ -202,4 +215,8 @@ function buildUrl(fqdn, path, params) {
 
 function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
+}
+
+async function discardResponse(response) {
+  try { await response.body?.cancel(); } catch { /* best-effort connection cleanup */ }
 }

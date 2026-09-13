@@ -9,6 +9,9 @@ node_modules/
 !.env.example
 *.pem
 *.key
+*.p12
+*.pfx
+*.crt
 secrets/
 
 # OS
@@ -44,6 +47,7 @@ reports/
 
 # Agent / MCP client local state
 .mcp.json
+.codex/
 .claude/*
 !.claude/skills/
 !.claude/skills/**

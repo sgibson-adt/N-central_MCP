@@ -43,18 +43,27 @@ export const paginationParams = {
 
 /** @param {PaginationArgs | Record<string, any>} args @param {PaginationPolicy} [policy] */
 export function paginationArgs(args, policy = PAGINATION_POLICIES.positiveOnly) {
-  const requestedPageSize = Number(args.pageSize);
-  const clampedPageSize = args.pageSize == null
-    ? undefined
-    : requestedPageSize === -1 && policy.allowMinusOne
-      ? -1
-      : Math.min(policy.maxPageSize, Math.max(1, Number.isFinite(requestedPageSize) ? Math.floor(requestedPageSize) : 1));
-  const clampedPageNumber = args.pageNumber != null
-    ? Math.max(1, Number(args.pageNumber) || 1)
-    : undefined;
+  if (args.pageNumber != null
+    && (!Number.isInteger(args.pageNumber) || args.pageNumber < 1)) {
+    throw new TypeError('pageNumber must be an integer starting at 1');
+  }
+  if (args.pageSize != null) {
+    const validPageSize = Number.isInteger(args.pageSize)
+      && ((policy.allowMinusOne && args.pageSize === -1)
+        || (args.pageSize >= 1 && args.pageSize <= policy.maxPageSize));
+    if (!validPageSize) {
+      const accepted = policy.allowMinusOne
+        ? `-1 or an integer from 1 through ${policy.maxPageSize}`
+        : `an integer from 1 through ${policy.maxPageSize}`;
+      throw new TypeError(`pageSize must be ${accepted}`);
+    }
+  }
+  if (Object.hasOwn(args, 'all') && args.all !== undefined && typeof args.all !== 'boolean') {
+    throw new TypeError('all must be a boolean');
+  }
   return {
-    pageNumber: clampedPageNumber,
-    pageSize: clampedPageSize,
+    pageNumber: args.pageNumber,
+    pageSize: args.pageSize,
     select: args.select,
     sortBy: args.sortBy,
     sortOrder: args.sortOrder,
@@ -71,8 +80,59 @@ export function paginationArgs(args, policy = PAGINATION_POLICIES.positiveOnly) 
  */
 /** @param {string} path @param {Record<string, unknown>} baseParams @param {PaginationArgs} [args] @param {PaginationPolicy} [policy] */
 export async function fetchOrPaginate(path, baseParams, args, policy = PAGINATION_POLICIES.positiveOnly) {
-  if (args?.all) return fetchAll(path, baseParams, policy.autoPageSize);
-  return apiGet(path, { ...baseParams, ...paginationArgs(args || {}, policy) });
+  const query = paginationArgs(args || {}, policy);
+  if (args?.all) {
+    const { pageNumber: _pageNumber, pageSize: _pageSize, ...filters } = query;
+    return fetchAll(path, { ...baseParams, ...filters }, policy.autoPageSize);
+  }
+  return apiGet(path, { ...baseParams, ...query });
+}
+
+/**
+ * Search canonical human-name fields after bounded complete-page retrieval.
+ * Raw FIQL/sort inputs remain upstream pre-filters; names are never inserted
+ * into a server expression, avoiding endpoint-specific escaping ambiguity.
+ *
+ * @param {string} path
+ * @param {Record<string, unknown>} baseParams
+ * @param {Record<string, any>} args
+ * @param {readonly string[]} fields
+ * @param {PaginationPolicy} [policy]
+ * @returns {Promise<unknown>}
+ */
+export async function fetchOrSearchByName(
+  path, baseParams, args, fields, policy = PAGINATION_POLICIES.allowAll,
+) {
+  const hasName = args?.name != null;
+  if (!hasName) {
+    if (args?.nameMatch != null) throw new TypeError('nameMatch requires name');
+    return fetchOrPaginate(path, baseParams, args, policy);
+  }
+  if (typeof args.name !== 'string' || args.name.trim().length === 0 || args.name.length > 200) {
+    throw new TypeError('name must be a non-empty string no longer than 200 characters');
+  }
+  const match = args.nameMatch ?? 'contains';
+  if (match !== 'exact' && match !== 'contains') {
+    throw new TypeError('nameMatch must be exact or contains');
+  }
+  if (args.pageNumber != null || args.pageSize != null) {
+    const field = args.pageNumber != null ? 'pageNumber' : 'pageSize';
+    throw new TypeError(`name search automatically retrieves bounded pages; omit ${field}`);
+  }
+  if (args.all === false) {
+    throw new TypeError('name search automatically retrieves bounded pages; omit all or set it to true');
+  }
+
+  const normalize = (value) => String(value).trim().toLocaleLowerCase('en-US').replace(/\s+/g, ' ');
+  const needle = normalize(args.name);
+  const records = await fetchOrPaginate(path, baseParams, { ...args, all: true }, policy);
+  if (!Array.isArray(records)) return [];
+  return records.filter((record) => fields.some((field) => {
+    const value = record?.[field];
+    if (typeof value !== 'string') return false;
+    const candidate = normalize(value);
+    return match === 'exact' ? candidate === needle : candidate.includes(needle);
+  }));
 }
 
 /**

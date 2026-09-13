@@ -26,7 +26,7 @@ export function parseToolsets(raw) {
 
 /**
  * Resolve catalog configuration without transport-specific behavior.
- * Optional toolset catalogs are added in the next implementation phase.
+ * All preferred and compatibility catalogs are resolved before write-mode filtering.
  * @param {{rawToolsets?: string, rawWriteMode?: string, definitions?: readonly Record<string, any>[], transport?: string}} [options]
  */
 export function resolveToolConfiguration(options = {}) {

@@ -19,11 +19,13 @@ The production findings are in `fast-uri`, `hono`, `ip-address`, `@hono/node-ser
 `body-parser`. The additional development finding is `brace-expansion`. All report a fix available;
 the combined candidate must verify that they clear without forcing an unrelated major update.
 
-## Open proposal dispositions
+## Proposal dispositions
 
 All five proposals were open and GitHub reported them mergeable with successful Node 22/24 CI at
-the review time. Their commits target `main`, so this feature branch will reproduce the approved
-intent in one combined candidate instead of merging bot branches independently.
+the initial review time. Their approved intent was reproduced in one combined candidate instead of
+merging bot branches independently. At the final 2026-09-13 check, GitHub reported no open pull
+requests. The five remote Dependabot branch refs still existed; they are stale branch cleanup, not
+unmerged release content.
 
 | PR | Proposal | Current change | Disposition | Rationale | Final validation |
 |---:|---|---|---|---|---|
@@ -60,21 +62,4 @@ The combined dependency candidate passed mandatory tests, coverage, migration, t
 lint, type-check, and the blocking high-severity audit on Node 22.23.2 and Node 24.21.0. The explicit
 Node 24 image lifecycle smoke also passed. Both production and full audits report zero findings.
 
-## Maintainer follow-up
-
-After the feature PR is merged, request maintainer approval before posting or closing anything.
-Recommended repository actions and comment text:
-
-- #39 — close as superseded: “Included the dev-dependency refresh in the 3.0 combined candidate;
-  final versions are ESLint 10.10.0, eslint-plugin-n 18.3.0, and globals 17.12.0, with Node 22/24
-  lint and release gates passing.”
-- #41 — close as superseded: “Included `actions/checkout@v7` in the 3.0 combined candidate while
-  retaining the Node 22/24 matrix.”
-- #42 — close as superseded: “Included MCP SDK 1.30.0 in the 3.0 combined candidate; real stdio,
-  Streamable HTTP, structured-result, session deletion, and graceful-shutdown regressions pass.”
-- #43 — close as superseded: “Included `actions/setup-node@v7` in the 3.0 combined candidate with
-  explicit npm caching and the Node 22/24 matrix.”
-- #44 — close without merging: “Superseded by Node 24 Alpine because Node 25 is EOL. The replacement
-  image passes Node-version, non-root, startup-failure, and health checks.”
-
-No external pull-request state or comments have been changed by this work.
+No external pull-request state, branch state, or comments were changed by this review.

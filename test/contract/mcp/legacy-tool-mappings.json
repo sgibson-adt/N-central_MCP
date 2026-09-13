@@ -23,7 +23,7 @@
       "replacement": "delete_device_notes",
       "compatibilityTool": "clear_device_notes",
       "behaviorChanges": [
-        "Delegates to delete_device_notes; inputs and results follow its curated contract."
+        "Maps to delete_device_notes; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -41,7 +41,7 @@
       "replacement": "create_psa_ticket",
       "compatibilityTool": "create_custom_psa_ticket",
       "behaviorChanges": [
-        "Delegates to create_psa_ticket; inputs and results follow its curated contract."
+        "Maps to create_psa_ticket; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -75,7 +75,7 @@
       "replacement": "create_scheduled_task",
       "compatibilityTool": "create_direct_scheduled_task",
       "behaviorChanges": [
-        "Delegates to create_scheduled_task; inputs and results follow its curated contract."
+        "Maps to create_scheduled_task; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -181,7 +181,7 @@
       "replacement": "get_psa_ticket",
       "compatibilityTool": "get_custom_psa_ticket_detail",
       "behaviorChanges": [
-        "Delegates to get_psa_ticket; inputs and results follow its curated contract."
+        "Maps to get_psa_ticket; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -191,7 +191,7 @@
       "replacement": "get_organization_context",
       "compatibilityTool": "get_customer",
       "behaviorChanges": [
-        "Delegates to get_organization_context; inputs and results follow its curated contract."
+        "Maps to get_organization_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -201,7 +201,7 @@
       "replacement": "get_device_context",
       "compatibilityTool": "get_device",
       "behaviorChanges": [
-        "Delegates to get_device_context; inputs and results follow its curated contract."
+        "Maps to get_device_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -219,7 +219,7 @@
       "replacement": "get_device_context",
       "compatibilityTool": "get_device_assets",
       "behaviorChanges": [
-        "Delegates to get_device_context; inputs and results follow its curated contract."
+        "Maps to get_device_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -245,7 +245,7 @@
       "replacement": "get_device_context",
       "compatibilityTool": "get_device_lifecycle",
       "behaviorChanges": [
-        "Delegates to get_device_context; inputs and results follow its curated contract."
+        "Maps to get_device_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -255,7 +255,7 @@
       "replacement": "get_device_context",
       "compatibilityTool": "get_device_status",
       "behaviorChanges": [
-        "Delegates to get_device_context; inputs and results follow its curated contract."
+        "Maps to get_device_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -265,7 +265,7 @@
       "replacement": "get_device_context",
       "compatibilityTool": "get_maintenance_windows",
       "behaviorChanges": [
-        "Delegates to get_device_context; inputs and results follow its curated contract."
+        "Maps to get_device_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -283,7 +283,7 @@
       "replacement": "get_organization_context",
       "compatibilityTool": "get_org_unit",
       "behaviorChanges": [
-        "Delegates to get_organization_context; inputs and results follow its curated contract."
+        "Maps to get_organization_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -325,7 +325,7 @@
       "replacement": "run_report",
       "compatibilityTool": "get_report",
       "behaviorChanges": [
-        "Delegates to run_report; inputs and results follow its curated contract."
+        "Maps to run_report; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -335,7 +335,7 @@
       "replacement": "get_scheduled_task_context",
       "compatibilityTool": "get_scheduled_task",
       "behaviorChanges": [
-        "Delegates to get_scheduled_task_context; inputs and results follow its curated contract."
+        "Maps to get_scheduled_task_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -345,7 +345,7 @@
       "replacement": "get_scheduled_task_context",
       "compatibilityTool": "get_scheduled_task_status",
       "behaviorChanges": [
-        "Delegates to get_scheduled_task_context; inputs and results follow its curated contract."
+        "Maps to get_scheduled_task_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -355,7 +355,7 @@
       "replacement": "get_server_status",
       "compatibilityTool": "get_server_info",
       "behaviorChanges": [
-        "Delegates to get_server_status; inputs and results follow its curated contract."
+        "Maps to get_server_status; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -373,7 +373,7 @@
       "replacement": "get_server_status",
       "compatibilityTool": "get_server_time",
       "behaviorChanges": [
-        "Delegates to get_server_status; inputs and results follow its curated contract."
+        "Maps to get_server_status; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -383,7 +383,7 @@
       "replacement": "get_organization_context",
       "compatibilityTool": "get_service_org",
       "behaviorChanges": [
-        "Delegates to get_organization_context; inputs and results follow its curated contract."
+        "Maps to get_organization_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -393,7 +393,7 @@
       "replacement": "get_organization_context",
       "compatibilityTool": "get_site",
       "behaviorChanges": [
-        "Delegates to get_organization_context; inputs and results follow its curated contract."
+        "Maps to get_organization_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -435,19 +435,17 @@
       "replacement": "list_users",
       "compatibilityTool": "list_all_users",
       "behaviorChanges": [
-        "Delegates to list_users; inputs and results follow its curated contract."
+        "Maps to list_users; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
     {
       "legacyName": "list_custom_psa_tickets",
-      "disposition": "consolidated",
-      "replacement": "search_psa_tickets",
-      "compatibilityTool": "list_custom_psa_tickets",
-      "behaviorChanges": [
-        "Delegates to search_psa_tickets; inputs and results follow its curated contract."
-      ],
-      "removalRationale": null
+      "disposition": "removed",
+      "replacement": null,
+      "compatibilityTool": null,
+      "behaviorChanges": [],
+      "removalRationale": "The upstream route returns navigation links rather than a searchable ticket collection; use get_psa_ticket with a known ticket ID."
     },
     {
       "legacyName": "list_customers",
@@ -455,7 +453,7 @@
       "replacement": "search_organizations",
       "compatibilityTool": "list_customers",
       "behaviorChanges": [
-        "Delegates to search_organizations; inputs and results follow its curated contract."
+        "Maps to search_organizations; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -481,7 +479,7 @@
       "replacement": "get_device_context",
       "compatibilityTool": "list_device_notes",
       "behaviorChanges": [
-        "Delegates to get_device_context; inputs and results follow its curated contract."
+        "Maps to get_device_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -491,7 +489,7 @@
       "replacement": "list_device_scheduled_tasks",
       "compatibilityTool": "list_device_tasks",
       "behaviorChanges": [
-        "Delegates to list_device_scheduled_tasks; inputs and results follow its curated contract."
+        "Maps to list_device_scheduled_tasks; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -501,7 +499,7 @@
       "replacement": "search_devices",
       "compatibilityTool": "list_devices",
       "behaviorChanges": [
-        "Delegates to search_devices; inputs and results follow its curated contract."
+        "Maps to search_devices; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -511,7 +509,7 @@
       "replacement": "search_devices",
       "compatibilityTool": "list_devices_by_org_unit",
       "behaviorChanges": [
-        "Delegates to search_devices; inputs and results follow its curated contract."
+        "Maps to search_devices; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -537,7 +535,7 @@
       "replacement": "get_organization_context",
       "compatibilityTool": "list_org_unit_children",
       "behaviorChanges": [
-        "Delegates to get_organization_context; inputs and results follow its curated contract."
+        "Maps to get_organization_context; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -547,7 +545,7 @@
       "replacement": "search_organizations",
       "compatibilityTool": "list_org_units",
       "behaviorChanges": [
-        "Delegates to search_organizations; inputs and results follow its curated contract."
+        "Maps to search_organizations; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -589,7 +587,7 @@
       "replacement": "list_device_scheduled_tasks",
       "compatibilityTool": "list_scheduled_tasks",
       "behaviorChanges": [
-        "Delegates to list_device_scheduled_tasks; inputs and results follow its curated contract."
+        "Maps to list_device_scheduled_tasks; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -599,7 +597,7 @@
       "replacement": "search_organizations",
       "compatibilityTool": "list_service_orgs",
       "behaviorChanges": [
-        "Delegates to search_organizations; inputs and results follow its curated contract."
+        "Maps to search_organizations; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -609,7 +607,7 @@
       "replacement": "search_organizations",
       "compatibilityTool": "list_sites",
       "behaviorChanges": [
-        "Delegates to search_organizations; inputs and results follow its curated contract."
+        "Maps to search_organizations; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -651,7 +649,7 @@
       "replacement": "report_all_users_by_service_org",
       "compatibilityTool": "report_all_users_by_so",
       "behaviorChanges": [
-        "Delegates to report_all_users_by_service_org; inputs and results follow its curated contract."
+        "Maps to report_all_users_by_service_org; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },
@@ -677,7 +675,7 @@
       "replacement": "report_devices_by_service_org",
       "compatibilityTool": "report_devices_by_so",
       "behaviorChanges": [
-        "Delegates to report_devices_by_service_org; inputs and results follow its curated contract."
+        "Maps to report_devices_by_service_org; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },

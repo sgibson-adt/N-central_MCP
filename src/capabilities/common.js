@@ -2,7 +2,21 @@
 /** Shared helpers for bounded, partially successful capability composition. */
 
 import { mapConcurrent } from '../paginator.js';
-import { createCapabilityResult, sanitizeToolError } from '../tool-registry.js';
+import { COMPOSITION_LIMITS, createCapabilityResult, sanitizeToolError } from '../tool-registry.js';
+
+/** @param {Record<string, any>} args @param {unknown} data */
+export function nameSearchPage(args, data) {
+  if (args?.name == null) return undefined;
+  return {
+    search: {
+      match: args.nameMatch ?? 'contains',
+      matched: Array.isArray(data) ? data.length : 0,
+      bounded: true,
+      maxPages: COMPOSITION_LIMITS.pages,
+      maxRecords: COMPOSITION_LIMITS.records,
+    },
+  };
+}
 
 /**
  * @param {unknown} primaryData
