@@ -42,4 +42,8 @@ describe('versioned release workflow', () => {
     assert.match(workflow, /already exists; leaving it unchanged/);
     assert.doesNotMatch(workflow, /git tag\s+-f|git push\s+--force/);
   });
+
+  it('provides explicit repository context to gh without requiring a checkout', () => {
+    assert.match(workflow, /GH_REPO:\s*\$\{\{ github\.repository \}\}/);
+  });
 });
