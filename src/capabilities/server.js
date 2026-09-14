@@ -27,6 +27,22 @@ export async function validateSession() {
   return createCapabilityResult({ valid: true, response }, ['GET /api/auth/validate']);
 }
 
-export async function getCurrentUser() {
-  return createCapabilityResult(await readCurrentUser(), ['GET /api/users/me']);
+/** @param {{detailLevel?: 'compact'|'full'}} [args] */
+export async function getCurrentUser(args = {}) {
+  const value = await readCurrentUser();
+  const source = value && typeof value === 'object' ? /** @type {Record<string, any>} */ (value) : {};
+  if (args.detailLevel === 'full') {
+    return createCapabilityResult(source, ['GET /api/users/me']);
+  }
+  const user = source?.data && typeof source.data === 'object' ? source.data : {};
+  const data = Object.fromEntries([
+    ['userId', user.userId], ['username', user.username], ['firstName', user.firstName],
+    ['lastName', user.lastName], ['customerId', user.customerId], ['isEnabled', user.isEnabled],
+    ['isLocked', user.isLocked], ['isPasswordExpired', user.isPasswordExpired],
+    ['isPasswordResetRequired', user.isPasswordResetRequired], ['twoFactorType', user.twoFactorType],
+    ['previousTwoFactorType', user.previousTwoFactorType], ['isLDAP', user.isLDAP],
+    ['externallyProvisioned', user.externallyProvisioned], ['autoSOUser', user.autoSOUser],
+    ['autoSOPower', user.autoSOPower],
+  ].filter(([, value]) => value !== undefined && value !== null));
+  return createCapabilityResult({ status: source?.status, message: source?.message, data }, ['GET /api/users/me']);
 }

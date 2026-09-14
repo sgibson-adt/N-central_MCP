@@ -179,5 +179,13 @@ it('registers and renders every public resource and prompt with synthetic tenant
     const result = await prompt.handler({ customerId: '2', orgUnitId: '3' });
     assert.ok(result.messages.length > 0, prompt.name);
     assert.ok(result.messages[0].content.text.length > 40, prompt.name);
+    const text = result.messages.map((message) => message.content?.text || '').join('\n');
+    assert.doesNotMatch(text, /search_(?:organizations|devices)[^\n]*all=true/);
+    if (prompt.name === 'device-health-audit') {
+      assert.match(text, /list_active_issues[^\n]*pageSize=25[^\n]*detailLevel='compact'/);
+    }
+    if (prompt.name === 'full-customer-report' || prompt.name === 'custom-property-audit') {
+      assert.match(text, /get_organization_context[^\n]*propertyOptions=\{all:true\}[^\n]*compact/);
+    }
   }
 });

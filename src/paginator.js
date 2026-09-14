@@ -47,13 +47,13 @@ export async function fetchAll(path, params = {}, pageSize = DEFAULT_PAGE_SIZE) 
 
 /**
  * Map over items with bounded concurrency. Preserves input order.
- * Errors are captured per-item as `{ _error, _item }`.
+ * Errors are captured per-item as `{ _error, _errorCode, _item }`.
  *
  * @template T, R
  * @param {readonly T[] | null | undefined} items
  * @param {(item: T, index: number) => Promise<R>} fn
  * @param {number} [concurrency=5]
- * @returns {Promise<(R | { _error: string, _item: T })[]>}
+ * @returns {Promise<(R | { _error: string, _errorCode: string, _item: T })[]>}
  */
 export async function mapConcurrent(items, fn, concurrency = 5) {
   if (!items?.length) return [];
@@ -66,7 +66,11 @@ export async function mapConcurrent(items, fn, concurrency = 5) {
       try {
         results[i] = await fn(items[i], i);
       } catch (err) {
-        results[i] = { _error: err.message, _item: items[i] };
+        results[i] = {
+          _error: err?.message,
+          _errorCode: typeof err?.category === 'string' ? err.category.toUpperCase() : 'UPSTREAM_ERROR',
+          _item: items[i],
+        };
       }
     }
   }

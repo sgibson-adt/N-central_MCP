@@ -2,7 +2,7 @@
 /** N-central API client: authenticated HTTP with retry and auto re-auth on 401. */
 
 import { getAccessToken, reAuthenticate } from './auth.js';
-import { getContext, MULTI_TENANT } from './context.js';
+import { getContext } from './context.js';
 import { auditLog } from './logging.js';
 import { inc } from './metrics.js';
 import { configuredNumber } from './config.js';
@@ -12,6 +12,38 @@ const RETRY_DELAY_MS = configuredNumber('NC_RETRY_DELAY_MS', 2000);
 const TIMEOUT_MS = configuredNumber('NC_REQUEST_TIMEOUT_MS', 30_000, { minimum: 1 });
 
 /** @typedef {'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD'} HttpMethod */
+
+export class NcentralApiError extends Error {
+  /**
+   * @param {string} category
+   * @param {string} message
+   * @param {{status?: number, method?: HttpMethod, path?: string, cause?: unknown}} [options]
+   */
+  constructor(category, message, options = {}) {
+    super(message, options.cause == null ? undefined : { cause: options.cause });
+    this.name = 'NcentralApiError';
+    this.category = category;
+    if (options.status != null) this.status = options.status;
+    if (options.method != null) this.method = options.method;
+    if (options.path != null) this.path = stripQuery(options.path);
+  }
+}
+
+function httpError(status, method, path) {
+  let category = 'request_failed';
+  if (status === 400 || status === 422) category = 'invalid_request';
+  else if (status === 401) category = 'authentication_failed';
+  else if (status === 403) category = 'forbidden';
+  else if (status === 404) category = 'not_found';
+  else if (status === 409) category = 'conflict';
+  else if (status === 429) category = 'rate_limited';
+  else if (status >= 500) category = 'upstream_unavailable';
+  return new NcentralApiError(
+    category,
+    `N-central ${category} (${status}) on ${method} ${stripQuery(path)}`,
+    { status, method, path },
+  );
+}
 
 // Idempotent methods retry on timeouts and 5xx. POST/PATCH retry only on
 // auth/rate-limit failures (where the request did not reach the handler).
@@ -44,10 +76,10 @@ export function sanitizePathParam(value) {
 /**
  * @param {HttpMethod} method
  * @param {string} path
- * @param {{ params?: Record<string, unknown>, body?: unknown }} [options]
+ * @param {{ params?: Record<string, unknown>, body?: unknown, retryTransient?: boolean }} [options]
  * @returns {Promise<unknown>}
  */
-async function apiRequest(method, path, { params = {}, body = null } = {}) {
+async function apiRequest(method, path, { params = {}, body = null, retryTransient = true } = {}) {
   // Resolve the tenant context once and reuse it for the whole request,
   // including retries — never re-read mid-flight (defends against any future
   // async-context drift, and one request always belongs to one tenant).
@@ -55,7 +87,7 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
 
   const url = buildUrl(ctx.fqdn, path, params);
   const hasBody = body != null;
-  const canRetryTransient = IDEMPOTENT_METHODS.has(method);
+  const canRetryTransient = retryTransient && IDEMPOTENT_METHODS.has(method);
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const token = await getAccessToken(ctx);
@@ -86,7 +118,10 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
           await sleep(delay);
           continue;
         }
-        throw new Error(`Request timed out on ${method} ${stripQuery(path)}`, { cause: err });
+        throw new NcentralApiError(
+          'timeout', `N-central timeout on ${method} ${stripQuery(path)}`,
+          { method, path, cause: err },
+        );
       }
       throw err;
     }
@@ -103,21 +138,23 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
         continue;
       }
       await discardResponse(res);
-      throw new Error('Rate limited (429) after retries');
+      throw httpError(429, method, path);
     }
 
     if (res.status === 401) {
-      if (attempt < MAX_RETRIES) {
+      // One fresh token replay is enough to distinguish expiry from a route-
+      // specific permission/integration rejection. Re-authenticating the same
+      // request repeatedly only adds delay and cannot change authorization.
+      if (attempt < Math.min(MAX_RETRIES, 1)) {
         await discardResponse(res);
-        const delay = attempt > 0 ? RETRY_DELAY_MS * 2 ** (attempt - 1) : 0;
+        const delay = 0;
         auditLog('api_retry', { method, path: stripQuery(path), status: 401, attempt: attempt + 1, delayMs: delay });
         inc('nc_mcp_api_retries_total', { reason: '401' });
         await reAuthenticate(ctx);
-        if (delay) await sleep(delay);
         continue;
       }
       await discardResponse(res);
-      throw new Error('Unauthorized (401) after re-auth');
+      throw httpError(401, method, path);
     }
 
     if (res.status >= 500 && res.status <= 599) {
@@ -130,15 +167,13 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
         continue;
       }
       await discardResponse(res);
-      throw new Error(`Server error ${res.status} on ${method} ${stripQuery(path)}`);
+      throw httpError(res.status, method, path);
     }
 
     if (!res.ok) {
-      // In multi-tenant mode, do not echo the response body into the error —
-      // it can carry tenant-identifying detail into shared operator logs.
-      const errBody = MULTI_TENANT ? '' : await res.text();
-      const detail = errBody ? `: ${truncate(errBody, 200)}` : '';
-      throw new Error(`API error ${res.status} on ${method} ${stripQuery(path)}${detail}`);
+      // Do not expose response bodies: N-central errors can contain tenant data.
+      await discardResponse(res);
+      throw httpError(res.status, method, path);
     }
 
     if (res.status === 204) return null;
@@ -155,7 +190,10 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
     try {
       data = JSON.parse(text);
     } catch {
-      throw new Error(`Invalid JSON from ${method} ${stripQuery(path)}: ${truncate(text, 120)}`);
+      throw new NcentralApiError(
+        'invalid_response', `N-central invalid_response on ${method} ${stripQuery(path)}`,
+        { method, path },
+      );
     }
 
     // N-central wraps some errors as an `error message` property inside 200
@@ -165,8 +203,10 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
       ? Object.entries(data).find(([key]) => key.trim().toLowerCase() === 'error message')
       : undefined;
     if (wrappedErrorEntry) {
-      const detail = MULTI_TENANT ? '' : `: ${truncate(wrappedErrorEntry[1], 200)}`;
-      throw new Error(`API error in 200 response${detail}`);
+      throw new NcentralApiError(
+        'invalid_response', `N-central invalid_response (error envelope) on ${method} ${stripQuery(path)}`,
+        { method, path },
+      );
     }
 
     return data;
@@ -176,6 +216,11 @@ async function apiRequest(method, path, { params = {}, body = null } = {}) {
 
 export function apiGet(path, params = {}) {
   return apiRequest('GET', path, { params });
+}
+
+/** GET without transient timeout/5xx retries; authentication and rate-limit recovery still apply. */
+export function apiGetOnce(path, params = {}) {
+  return apiRequest('GET', path, { params, retryTransient: false });
 }
 
 export function apiPost(path, body = null, params = {}) {
@@ -197,12 +242,6 @@ export function apiDelete(path, params = {}, body = null) {
 function stripQuery(path) {
   const q = path.indexOf('?');
   return q === -1 ? path : path.slice(0, q);
-}
-
-function truncate(str, max) {
-  if (!str) return '';
-  const s = String(str);
-  return s.length > max ? `${s.slice(0, max)}...` : s;
 }
 
 function buildUrl(fqdn, path, params) {

@@ -84,6 +84,39 @@ function fitResultToLimit(result) {
   return fitted;
 }
 
+/** @param {{data: unknown, meta: Record<string, any>}} result */
+export function summarizeMcpResult(result) {
+  const { data, meta } = result;
+  let summary;
+  if (Array.isArray(data)) {
+    summary = `Returned ${data.length} record${data.length === 1 ? '' : 's'}.`;
+  } else if (typeof data === 'string') {
+    summary = `Returned a text result (${Buffer.byteLength(data, 'utf8')} bytes).`;
+  } else if (data && typeof data === 'object') {
+    const objectData = /** @type {Record<string, any>} */ (data);
+    const nested = Array.isArray(objectData.data) ? objectData.data : null;
+    if (nested) {
+      summary = `Returned ${nested.length} record${nested.length === 1 ? '' : 's'} in a paged result.`;
+    } else {
+      const keys = Object.keys(objectData);
+      summary = keys.length
+        ? `Returned an object with fields: ${keys.slice(0, 12).join(', ')}${keys.length > 12 ? ', …' : ''}.`
+        : 'Returned an empty object.';
+    }
+  } else if (data == null) {
+    summary = 'Returned no data.';
+  } else {
+    summary = `Returned a ${typeof data} value.`;
+  }
+  if (meta.page?.pageNumber != null) {
+    summary += ` Page ${meta.page.pageNumber}${meta.page.totalPages != null ? ` of ${meta.page.totalPages}` : ''}.`;
+    if (meta.page.hasNextPage) summary += ` Request pageNumber=${Number(meta.page.pageNumber) + 1} for more.`;
+  }
+  if (meta.partial) summary += ` ${meta.errors?.length || 0} component error(s) occurred.`;
+  if (meta.truncated) summary += ' The structured result was truncated.';
+  return summary;
+}
+
 /** @param {Record<string, any>} tool @param {{data: unknown, meta: Record<string, any>}} result */
 export function toMcpResult(tool, result) {
   const structuredContent = fitResultToLimit(createCapabilityResult(
@@ -92,13 +125,8 @@ export function toMcpResult(tool, result) {
     result?.meta?.errors || [],
     { page: result?.meta?.page, truncated: result?.meta?.truncated },
   ));
-  const data = structuredContent.data;
-  const summary = typeof data === 'string'
-    ? data
-    : JSON.stringify(data, null, 2);
-  const suffix = structuredContent.meta.partial ? '\n\nSome optional components could not be loaded.' : '';
   return {
-    content: [{ type: /** @type {const} */ ('text'), text: `${summary}${suffix}` }],
+    content: [{ type: /** @type {const} */ ('text'), text: summarizeMcpResult(structuredContent) }],
     structuredContent,
   };
 }

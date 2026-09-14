@@ -38,6 +38,10 @@ Valid toolsets are `core`, `operations`, `administration`, `psa`, `reporting`, a
 tools are visible only in `full`. Catalog unions are de-duplicated and then intersected with the
 mode, so selecting a catalog never bypasses authority.
 
+Use `NC_TOOLSETS=all` to select all five preferred v3 catalogs. It intentionally excludes the
+legacy `compatibility` aliases to avoid duplicate discovery and unnecessary token cost. Use
+`NC_TOOLSETS=all,compatibility` only when an older client or skill still requires legacy names.
+
 Set these variables in the server process for HTTP deployments or in each MCP server entry's `env`
 for stdio. Omit both for the safest default. See [MCP Toolsets](MCP-TOOLSETS.md) for exact current
 membership and [Migrating to 3.0](MIGRATING-TO-3.0.md) before enabling `compatibility`.

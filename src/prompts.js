@@ -29,9 +29,9 @@ export function registerPrompts(server) {
 
 Steps:
 1. Use the ncentral://org-tree resource to get the full organization hierarchy
-2. Use search_organizations with organizationType='customer' and all=true to get customer details${args?.customerId ? ` — filter to customerId=${args.customerId}` : ''}
-3. Use search_organizations with organizationType='site' and all=true to get site details
-4. For each customer and site, use get_organization_context with include=['customProperties']
+2. Page through search_organizations with organizationType='customer' and pageSize=100${args?.customerId ? ` — filter to customerId=${args.customerId}` : ''}
+3. For each customer, page through search_organizations with organizationType='site', parentId=<customerId>, and pageSize=100
+4. For each customer and site, use get_organization_context with include=['customProperties'] and propertyOptions={all:true}; keep the default compact projection
 5. Merge everything into a single CSV with columns: OrgType, OrgId, OrgName, ParentId, and all custom property columns
 6. Present the CSV to the user
 
@@ -55,8 +55,8 @@ Important: Make sure to paginate through ALL results — there may be hundreds o
 
 Steps:
 1. Use the ncentral://org-tree resource to understand the org structure
-2. For each customer, use list_active_issues to get current problems
-3. Use search_devices with all=true to get the bounded device inventory
+2. For each customer, page through list_active_issues with pageSize=25 and detailLevel='compact'
+3. Page through search_devices with pageSize=100 and detailLevel='compact' to get the device inventory
 4. Summarize:
    - Total devices per customer
    - Active issues per customer (group by severity if available)
@@ -76,7 +76,7 @@ Present a summary table and flag any customers needing attention.` } }],
 
 Steps:
 1. Use the ncentral://org-tree resource for the org hierarchy
-2. Use search_devices with all=true to get devices with their org unit IDs
+2. Page through search_devices with pageSize=100 and detailLevel='compact' to get devices with their org unit IDs
 3. Cross-reference to count devices per customer and per site
 4. Flag:
    - Sites with 0 devices (agents not deployed)
@@ -93,8 +93,8 @@ Steps:
       messages: [{ role: 'user', content: { type: 'text', text: `Audit custom property values across all customers for consistency.
 
 Steps:
-1. Use search_organizations with organizationType='customer' and all=true to get the customer list
-2. For each customer, use get_organization_context with include=['customProperties']
+1. Page through search_organizations with organizationType='customer' and pageSize=100 to get the customer list
+2. For each customer, use get_organization_context with include=['customProperties'] and propertyOptions={all:true}; keep the default compact projection
 3. Build a matrix: Customer vs Custom Property values
 4. Identify:
    - Properties that are blank/missing for some customers but set for others
