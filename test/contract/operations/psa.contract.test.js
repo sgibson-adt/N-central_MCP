@@ -1,7 +1,7 @@
 import { it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { installContractFetch, jsonResponse, syntheticTenant, withSyntheticTenant } from '../fixtures.js';
+import { errorResponse, installContractFetch, jsonResponse, syntheticTenant, withSyntheticTenant } from '../fixtures.js';
 import {
   getPsaCustomerMapping, validatePsaCredential, getPsaTicket,
   createPsaTicket, resolvePsaTicket, reopenPsaTicket, listPsaCustomerMappings,
@@ -63,4 +63,15 @@ it('preserves the list envelopes emitted by Standard PSA read endpoints', async 
 
   for (const result of Object.values(results)) assert.equal(Array.isArray(result.data), true);
   assert.deepEqual(results.mapping, results.mappings);
+});
+
+it('returns an explicit unavailable status for the Standard PSA company-discovery 500 without retrying', async () => {
+  boundary = installContractFetch({ responder: () => errorResponse(500, 'private integration detail') });
+  const result = await withSyntheticTenant(syntheticTenant('psa-unavailable'), () => listPsaCompanies('1'));
+  assert.deepEqual(result, {
+    data: [], totalItems: 0, integrationStatus: 'unavailable',
+    reason: 'Standard PSA integration is not configured or company discovery is unavailable.',
+  });
+  assert.equal(boundary.calls.filter(({ path }) => path.endsWith('/companies')).length, 1);
+  assert.equal(JSON.stringify(result).includes('private'), false);
 });

@@ -4,7 +4,7 @@
 
 - Cases: 40
 - Ordinary/ambiguous cases: 24
-- Top-one success: 83.3%
+- Top-one success: 91.7%
 - Top-three success: 100.0%
 - Prohibited accepted choices: 0
 - Hidden candidates: 0

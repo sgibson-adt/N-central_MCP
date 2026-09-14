@@ -9,9 +9,15 @@ import { reportingTools } from './tools/reporting.js';
 import { compatibilityTools } from './tools/compatibility.js';
 import { isToolAllowed } from './tool-registry.js';
 
-export const TOOLSET_NAMES = Object.freeze([
-  'core', 'operations', 'administration', 'psa', 'reporting', 'compatibility',
+export const PREFERRED_TOOLSET_NAMES = Object.freeze([
+  'core', 'operations', 'administration', 'psa', 'reporting',
 ]);
+export const TOOLSET_NAMES = Object.freeze([
+  ...PREFERRED_TOOLSET_NAMES, 'compatibility',
+]);
+export const TOOLSET_ALIASES = Object.freeze({
+  all: PREFERRED_TOOLSET_NAMES,
+});
 export const WRITE_MODES = Object.freeze(['read-only', 'write', 'full']);
 
 /** @param {string | undefined | null} raw */
@@ -19,9 +25,13 @@ export function parseToolsets(raw) {
   if (raw == null || raw.trim() === '') return ['core'];
   const pieces = raw.split(',').map((value) => value.trim().toLowerCase());
   if (pieces.some((value) => value === '')) throw new Error('NC_TOOLSETS is malformed: empty toolset name');
-  const unknown = pieces.find((value) => !TOOLSET_NAMES.includes(value));
-  if (unknown) throw new Error(`Unknown NC_TOOLSETS value "${unknown}". Allowed values: ${TOOLSET_NAMES.join(', ')}`);
-  return [...new Set(pieces)];
+  const unknown = pieces.find((value) => !TOOLSET_NAMES.includes(value) && !TOOLSET_ALIASES[value]);
+  if (unknown) {
+    throw new Error(
+      `Unknown NC_TOOLSETS value "${unknown}". Allowed values: all, ${TOOLSET_NAMES.join(', ')}`,
+    );
+  }
+  return [...new Set(pieces.flatMap((value) => TOOLSET_ALIASES[value] || value))];
 }
 
 /**

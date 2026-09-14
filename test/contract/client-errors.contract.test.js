@@ -23,7 +23,10 @@ describe('client error contract', () => {
     boundary = installContractFetch({ responder(call) {
       return call.path === '/api/no-retries' ? errorResponse(500) : null;
     } });
-    await assert.rejects(withSyntheticTenant(syntheticTenant('zero-retry'), () => zeroRetryClient.apiGet('/api/no-retries')), /Server error 500/);
+    await assert.rejects(
+      withSyntheticTenant(syntheticTenant('zero-retry'), () => zeroRetryClient.apiGet('/api/no-retries')),
+      (error) => error.category === 'upstream_unavailable' && error.status === 500,
+    );
     assert.equal(boundary.calls.filter(({ path }) => path === '/api/no-retries').length, 1);
   });
 
@@ -43,7 +46,10 @@ describe('client error contract', () => {
       await withSyntheticTenant(syntheticTenant(`retry-${status}`), () => client.apiGet(`/api/retry-${status}`));
       assert.equal(boundary.calls.filter((c) => c.path === `/api/retry-${status}`).length, 2);
     }
-    await assert.rejects(withSyntheticTenant(syntheticTenant('post'), () => client.apiPost('/api/no-retry', {})), /Server error 502/);
+    await assert.rejects(
+      withSyntheticTenant(syntheticTenant('post'), () => client.apiPost('/api/no-retry', {})),
+      (error) => error.category === 'upstream_unavailable' && error.status === 502,
+    );
     assert.equal(boundary.calls.filter((c) => c.path === '/api/no-retry').length, 1);
   });
 
@@ -57,8 +63,8 @@ describe('client error contract', () => {
       return jsonResponse({ ok: true });
     } });
     assert.deepEqual(await withSyntheticTenant(syntheticTenant('throttle'), () => client.apiPost('/api/throttle', {})), { ok: true });
-    await assert.rejects(withSyntheticTenant(syntheticTenant('wrapped'), () => client.apiGet('/api/wrapped')), /API error in 200 response/);
-    await assert.rejects(withSyntheticTenant(syntheticTenant('wrapped-case'), () => client.apiGet('/api/wrapped-case')), /API error in 200 response/);
+    await assert.rejects(withSyntheticTenant(syntheticTenant('wrapped'), () => client.apiGet('/api/wrapped')), { category: 'invalid_response' });
+    await assert.rejects(withSyntheticTenant(syntheticTenant('wrapped-case'), () => client.apiGet('/api/wrapped-case')), { category: 'invalid_response' });
     assert.equal(await withSyntheticTenant(syntheticTenant('text'), () => client.apiGet('/api/text')), 'plain response');
   });
 
@@ -67,8 +73,27 @@ describe('client error contract', () => {
       if (call.path === '/api/timeout') { const error = new Error('aborted'); error.name = 'AbortError'; throw error; }
       return null;
     } });
-    await assert.rejects(withSyntheticTenant(syntheticTenant('timeout'), () => client.apiGet('/api/timeout')), /timed out/);
+    await assert.rejects(withSyntheticTenant(syntheticTenant('timeout'), () => client.apiGet('/api/timeout')), { category: 'timeout' });
     assert.equal(boundary.calls.filter((c) => c.path === '/api/timeout').length, 2);
     assert.equal(sanitizeToolError('Bearer secret at https://tenant.example.test/api').includes('secret'), false);
+  });
+
+  it('classifies common HTTP failures without retaining upstream response bodies', async () => {
+    boundary = installContractFetch({ responder(call) {
+      const status = Number(call.path.split('-').at(-1));
+      return errorResponse(status, `private detail for ${status}`);
+    } });
+    const expected = new Map([
+      [400, 'invalid_request'], [401, 'authentication_failed'], [403, 'forbidden'],
+      [404, 'not_found'], [409, 'conflict'], [422, 'invalid_request'],
+    ]);
+    for (const [status, category] of expected) {
+      await assert.rejects(
+        withSyntheticTenant(syntheticTenant(`classified-${status}`), () => client.apiPost(`/api/status-${status}`, {})),
+        (error) => error.category === category && error.status === status
+          && !error.message.includes('private detail'),
+      );
+    }
+    assert.equal(boundary.calls.filter(({ path }) => path === '/api/status-401').length, 2);
   });
 });

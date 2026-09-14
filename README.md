@@ -56,7 +56,7 @@ The most common variables (full list in [.env.example](.env.example)):
 | `NC_JWT_TOKEN` | single-tenant | User-API JWT from the N-central UI. *Not* needed in multi-tenant mode |
 | `NC_MULTI_TENANT` | hosted mode | Set to `1` to require per-request `X-NC-FQDN`/`X-NC-JWT` headers (HTTP only). See [Multi-Tenant Mode](#multi-tenant-hosted-mode) |
 | `NC_FQDN_ALLOWLIST` | multi-tenant | Comma-separated host suffixes a client may target — SSRF guard (exact or DNS-suffix match) |
-| `NC_TOOLSETS` | optional | Comma-separated catalogs; defaults to `core`. Valid names: `core`, `operations`, `administration`, `psa`, `reporting`, `compatibility` |
+| `NC_TOOLSETS` | optional | Comma-separated catalogs; defaults to `core`. `all` selects every preferred v3 catalog. Valid names: `all`, `core`, `operations`, `administration`, `psa`, `reporting`, `compatibility` |
 | `NC_WRITE_MODE` | optional | `read-only` \| `write` \| `full` (default `read-only`) |
 | `MCP_PORT` | HTTP mode only | Setting this enables HTTP mode (omit for stdio) |
 | `MCP_API_KEY` | HTTP mode | Bearer token clients must present. Generate with `openssl rand -hex 32`. **Required** unless `MCP_ALLOW_UNAUTHENTICATED=1` |
@@ -80,6 +80,8 @@ For example, `NC_TOOLSETS=core,reporting` remains read-only by default, while
 `NC_TOOLSETS=operations NC_WRITE_MODE=full` enables destructive operational workflows. All
 write/destructive tools are audit-logged. See [MCP Toolsets](docs/MCP-TOOLSETS.md) for exact current
 membership and [Migrating to 3.0](docs/MIGRATING-TO-3.0.md) for all 87 legacy-name dispositions.
+`NC_TOOLSETS=all` expands to the five preferred v3 catalogs and intentionally excludes the legacy
+`compatibility` aliases; use `NC_TOOLSETS=all,compatibility` only while testing or migrating old names.
 
 #### Upgrade from 2.x
 
@@ -137,6 +139,11 @@ To use another port, start the server with `MCP_PORT=<port> npm start`. There is
 default in the runtime: an omitted `MCP_PORT` selects stdio.
 
 Clients send `Authorization: Bearer <MCP_API_KEY>` on every request.
+
+The Prometheus endpoint exposes bounded-label call counts plus cumulative tool duration, serialized
+response bytes, upstream-operation counts, and partial/truncated-result counters. Divide duration
+or byte totals by the matching call count to track average latency and response size without using
+tenant, organization, device, user, or request identifiers as labels.
 
 **Option C — Docker**
 
@@ -291,15 +298,35 @@ Every successful tool result has the same shape:
 }
 ```
 
-The same value is returned as MCP `structuredContent` and as a readable text fallback. Component
-failures can be reported as partial results; secrets and tenant URLs are redacted. Results are capped
-at 256 KiB.
+The complete value is returned once as MCP `structuredContent`; text content is a compact summary
+with record count, page guidance, and partial/truncation state. Component failures can be reported
+as partial results; secrets and tenant URLs are redacted. Structured results are capped at 256 KiB.
 
 ### Pagination and composition limits
 
 List calls return one page unless `all: true` is supported. Automatic pagination is bounded to 20
 pages and 10,000 records, with endpoint-specific page rules (including positive-only active-issue
 paging). Compositions use at most 10 upstream calls with concurrency capped at 5.
+
+High-cardinality core/reporting tools use compact, bounded defaults:
+
+- `get_organization_context` returns compact organization, child, and custom-property projections;
+  child/property components default to page 1 with 25 rows. Use their option objects and
+  `detailLevel: "full"` when broader context is intentional.
+- `search_devices` returns compact discovery fields by default; request `detailLevel: "full"` only
+  when complete device records are required.
+- `get_current_user` omits contact and postal-profile fields by default; request full detail only
+  for workflows that need the broader profile.
+- `list_active_issues` defaults to 10 compact rows; use `detailLevel: "full"` explicitly for the
+  complete upstream issue fields.
+- `list_job_statuses` defaults to 25 compact rows and supports local `status`, `deviceId`, `jobId`,
+  `since`, `pageNumber`, and `pageSize` filtering/pagination. The upstream REST route itself remains
+  unpaged, so these options reduce MCP context rather than upstream latency.
+- `report_devices_bulk` defaults to one compact 25-device page. Use `all: true` only for an explicit
+  complete-inventory fan-out, `detailLevel: "full"` for raw data, and `propertyNames` to restrict a
+  compact custom-property report to named properties.
+- `report_all_users_by_service_org` defaults to one compact 25-user page. Page through the deduped
+  roster, or request `all: true` / `detailLevel: "full"` only when the broader result is necessary.
 
 ### API coverage and limitations
 
@@ -343,7 +370,7 @@ Resources provide live context to the client without requiring explicit tool cal
 | Rate limits (429) | Auto-retry with exponential backoff on all methods (up to 3 attempts) |
 | Unauthorized (401) | Auto re-authenticates from JWT and replays the request on all methods |
 | Token expiry | Access tokens (1hr) and refresh tokens (25hr) auto-refreshed; concurrent refreshes coalesced |
-| Server errors (all 5xx) | Retried on GET/PUT/DELETE/HEAD (replay-safe). POST/PATCH fail fast to avoid duplicate writes |
+| Server errors (all 5xx) | Retried on GET/PUT/DELETE/HEAD (replay-safe), except PSA discovery/detail reads that fail fast because those routes can use 500 for missing integration/data. POST/PATCH fail fast to avoid duplicate writes |
 | Request timeouts | 30s on API calls, 15s on auth calls. Retried on idempotent methods only |
 | Stale HTTP sessions | Cleaned up after 30 minutes of inactivity |
 
@@ -361,6 +388,9 @@ Resources provide live context to the client without requiring explicit tool cal
 - **`create_direct_scheduled_task`:** Scripts must have Repository ID ≥ 2000 and "Enable API" toggled ON in the N-central UI. There's no API to enumerate scripts — find IDs in the Script/Software Repository UI. Extensive use accumulates DB rows that slow the UI's Task Execution page.
 - **`validate_psa_credential`:** only works with TigerPaw 3.0 — calls for other PSAs will fail.
 - **Standard PSA collection shapes:** Customer mappings, companies, contacts, and sites return `{ data: [...] }` envelopes on live systems even though the reviewed OpenAPI responses reference singular PSA models. The MCP preserves the upstream envelope.
+- **Standard PSA company discovery:** Some systems return HTTP 500 when no integration is configured.
+  `list_psa_companies` converts that ambiguous condition into an empty result with
+  `integrationStatus: "unavailable"`; it does not claim the integration is definitively absent.
 - **Per-endpoint concurrency limits:** N-central enforces concurrency per-endpoint (range 1-50). `/api/devices` allows 5 concurrent; `/api/devices/{id}/assets/lifecycle-info` only 1. Bulk reports default to safe values; tune via the `concurrency` parameter.
 - **PREVIEW endpoints:** customer-scoped site listing/creation, customer/site registration tokens, and user-role listing/detail/creation are flagged PREVIEW by N-central. Every mapped tool warns during discovery because these contracts may change.
 - **Credentialed POST tools:** `validate_psa_credential` and the compatibility alias `get_custom_psa_ticket_detail` transmit plaintext credentials in request bodies — use them only over HTTPS. The credential-bearing authenticated server-information operation is intentionally not exposed.

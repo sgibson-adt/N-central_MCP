@@ -39,7 +39,7 @@ export async function composeOptional(primaryData, primaryOperation, components)
     if (result && typeof result === 'object' && '_error' in result) {
       errors.push({
         component: component.name,
-        code: 'UPSTREAM_ERROR',
+        code: typeof result._errorCode === 'string' ? result._errorCode : 'UPSTREAM_ERROR',
         message: sanitizeToolError(result._error),
       });
     } else {

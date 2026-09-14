@@ -11,13 +11,31 @@ import { getMaintenanceWindows } from '../operations/maintenance-windows.js';
 import { createCapabilityResult } from '../tool-registry.js';
 import { composeOptional, nameSearchPage } from './common.js';
 
+const compactDevice = (device) => Object.fromEntries([
+  ['deviceId', device?.deviceId ?? device?.id],
+  ['longName', device?.longName], ['discoveredName', device?.discoveredName],
+  ['deviceStatus', device?.deviceStatus], ['deviceClass', device?.deviceClass],
+  ['deviceClassLabel', device?.deviceClassLabel], ['supportedOs', device?.supportedOs],
+  ['supportedOsLabel', device?.supportedOsLabel], ['isProbe', device?.isProbe],
+  ['lastApplianceCheckinTime', device?.lastApplianceCheckinTime],
+  ['orgUnitId', device?.orgUnitId], ['siteId', device?.siteId], ['siteName', device?.siteName],
+  ['customerId', device?.customerId], ['customerName', device?.customerName],
+  ['soId', device?.soId], ['soName', device?.soName],
+].filter(([, value]) => value !== undefined && value !== null));
+
 /** @param {Record<string, any>} [args] */
 export async function searchDevices(args = {}) {
-  const operation = args.orgUnitId == null
+  const { detailLevel = 'compact', ...query } = args;
+  const operation = query.orgUnitId == null
     ? 'GET /api/devices'
     : 'GET /api/org-units/{orgUnitId}/devices';
-  const data = await search(args);
-  return createCapabilityResult(data, [operation], [], { page: nameSearchPage(args, data) });
+  const source = await search(query);
+  const envelope = source && typeof source === 'object'
+    ? /** @type {Record<string, any>} */ (source) : {};
+  const data = detailLevel === 'full' ? source : (Array.isArray(source)
+    ? source.map(compactDevice)
+    : { ...envelope, data: Array.isArray(envelope.data) ? envelope.data.map(compactDevice) : envelope.data });
+  return createCapabilityResult(data, [operation], [], { page: nameSearchPage(query, source) });
 }
 
 /** @param {{deviceId: string | number, include?: string[], noteOptions?: Record<string, any>}} args */

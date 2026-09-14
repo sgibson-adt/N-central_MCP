@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { Readable } from 'node:stream';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 
 import {
   ContextError,
@@ -14,6 +16,8 @@ import {
 } from '../src/http-runtime.js';
 import { createMcpServer } from '../src/mcp-server.js';
 import { inc, renderPrometheus, setGauge } from '../src/metrics.js';
+import { createCapabilityResult } from '../src/tool-registry.js';
+import { CURATED_OUTPUT_SCHEMA } from '../src/tools/core.js';
 
 describe('focused server runtime modules', () => {
   it('keeps the executable entry point limited to configuration and lifecycle wiring', () => {
@@ -26,6 +30,72 @@ describe('focused server runtime modules', () => {
     const server = createMcpServer([]);
     assert.equal(typeof server.connect, 'function');
     assert.equal(typeof server.registerTool, 'function');
+  });
+
+  it('enforces strict inputs and renders successful and failed handlers in memory', async () => {
+    const inputSchema = {
+      type: 'object', additionalProperties: false,
+      properties: { value: { type: 'string' } }, required: ['value'],
+    };
+    const tools = [
+      {
+        name: 'synthetic_read', description: 'Synthetic successful read used by the runtime test.',
+        inputSchema, outputSchema: CURATED_OUTPUT_SCHEMA,
+        operations: ['GET /api/synthetic'], toolsets: ['core'], writeScope: 'read',
+        handler: async ({ value }) => value === 'large-partial'
+          ? createCapabilityResult(
+            Array.from({ length: 400 }, (_, index) => ({ index, value: 'x'.repeat(1000) })),
+            ['GET /api/synthetic'],
+            [{ component: 'optional', code: 'NOT_FOUND', message: 'not found' }],
+          )
+          : createCapabilityResult({ value }, ['GET /api/synthetic']),
+      },
+      {
+        name: 'synthetic_write', description: 'Synthetic failed write used by the runtime test.',
+        inputSchema, outputSchema: CURATED_OUTPUT_SCHEMA,
+        operations: ['POST /api/synthetic'], toolsets: ['operations'], writeScope: 'write',
+        handler: async () => { throw new Error('Bearer secret at https://tenant.example.test/api'); },
+      },
+    ];
+    const server = createMcpServer(tools);
+    const client = new Client({ name: 'runtime-test', version: '1' });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    await client.connect(clientTransport);
+    try {
+      const invalid = await client.callTool({
+        name: 'synthetic_read', arguments: { value: 'ok', unexpected: true },
+      });
+      assert.equal(invalid.isError, true);
+
+      const successful = await client.callTool({
+        name: 'synthetic_read', arguments: { value: 'ok' },
+      });
+      assert.deepEqual(successful.structuredContent.data, { value: 'ok' });
+      assert.equal(successful.content[0].text.includes('ok'), false);
+
+      const failed = await client.callTool({
+        name: 'synthetic_write', arguments: { value: 'fail' },
+      });
+      assert.equal(failed.isError, true);
+      assert.equal(JSON.stringify(failed).includes('secret'), false);
+      assert.equal(JSON.stringify(failed).includes('tenant.example.test'), false);
+      const bounded = await client.callTool({
+        name: 'synthetic_read', arguments: { value: 'large-partial' },
+      });
+      assert.equal(bounded.structuredContent.meta.partial, true);
+      assert.equal(bounded.structuredContent.meta.truncated, true);
+      const metrics = renderPrometheus();
+      assert.match(metrics, /nc_mcp_tool_duration_ms_total\{success="true",tool="synthetic_read"\}/);
+      assert.match(metrics, /nc_mcp_tool_response_bytes_total\{success="true",tool="synthetic_read"\}/);
+      assert.match(metrics, /nc_mcp_upstream_operations_total\{tool="synthetic_read"\} 2/);
+      assert.match(metrics, /nc_mcp_tool_response_bytes_total\{success="false",tool="synthetic_write"\}/);
+      assert.match(metrics, /nc_mcp_partial_results_total\{tool="synthetic_read"\}/);
+      assert.match(metrics, /nc_mcp_truncated_results_total\{tool="synthetic_read"\}/);
+    } finally {
+      await client.close();
+      await server.close();
+    }
   });
 
   it('enforces rate limits, bounded client tracking, and window rollover deterministically', () => {

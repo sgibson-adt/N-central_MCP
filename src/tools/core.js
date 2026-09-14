@@ -23,7 +23,7 @@ const nameSearchProperties = {
     description: 'Case-insensitive human-name search. Automatically scans bounded pages; do not combine with pageNumber or pageSize.',
   },
   nameMatch: {
-    type: 'string', enum: ['exact', 'contains'], default: 'contains',
+    type: 'string', enum: ['exact', 'contains'],
     description: 'Human-name matching mode; requires name.',
   },
 };
@@ -81,8 +81,9 @@ export const coreTools = Object.freeze([
   ),
   coreTool(
     'get_current_user',
-    'Return the current N-central user identity and its non-secret authorization context.',
-    input(), ['GET /api/users/me'], getCurrentUser,
+    'Return compact current-user identity and authorization context, or explicit full profile detail.',
+    input({ detailLevel: { type: 'string', enum: ['compact', 'full'], description: 'compact (default) omits contact and postal profile fields.' } }),
+    ['GET /api/users/me'], getCurrentUser,
   ),
   coreTool(
     'search_organizations',
@@ -98,13 +99,32 @@ export const coreTools = Object.freeze([
   ),
   coreTool(
     'get_organization_context',
-    'Load an organization unit plus selected children, limits, and custom-property context.',
+    'Load compact organization details plus selected bounded children, limits, and custom-property context. Request full/all explicitly.',
     input({
       orgUnitId: { type: ['string', 'number'], description: 'Organization unit identifier.' },
+      detailLevel: { type: 'string', enum: ['compact', 'full'], description: 'compact (default) returns task-focused fields; full retains upstream records.' },
       include: {
         type: 'array', uniqueItems: true,
         items: { type: 'string', enum: ['details', 'children', 'limits', 'customProperties'] },
         description: 'Optional components; details are always the primary component.',
+      },
+      childrenOptions: {
+        type: 'object', additionalProperties: false,
+        description: 'Pagination for children; defaults to page 1 with 25 rows.',
+        properties: {
+          pageNumber: { type: 'integer', minimum: 1 },
+          pageSize: { type: 'integer', minimum: 1, maximum: 1000 },
+          all: { type: 'boolean' },
+        },
+      },
+      propertyOptions: {
+        type: 'object', additionalProperties: false,
+        description: 'Pagination for custom properties; defaults to page 1 with 25 rows.',
+        properties: {
+          pageNumber: { type: 'integer', minimum: 1 },
+          pageSize: { type: 'integer', minimum: 1, maximum: 1000 },
+          all: { type: 'boolean' },
+        },
       },
     }, ['orgUnitId']),
     ['GET /api/org-units/{orgUnitId}', 'GET /api/org-units/{orgUnitId}/children', 'GET /api/org-units/{orgUnitId}/limits', 'GET /api/org-units/{orgUnitId}/custom-properties'],
@@ -116,6 +136,7 @@ export const coreTools = Object.freeze([
     input({
       orgUnitId: { type: ['string', 'number'], description: 'Optional organization unit scope.' },
       filterId: { type: 'integer', description: 'Optional N-central device filter identifier.' },
+      detailLevel: { type: 'string', enum: ['compact', 'full'], description: 'compact (default) returns discovery fields; full returns complete device records.' },
       ...nameSearchProperties,
       ...pageProperties,
     }),
@@ -151,11 +172,12 @@ export const coreTools = Object.freeze([
   ),
   coreTool(
     'list_active_issues',
-    'List current active monitoring issues for an organization unit with positive-only bounded pagination.',
+    'List current active monitoring issues for a customer or site (service-org scope is unsupported), with bounded pagination and a compact default projection. Use detailLevel=full only when complete upstream records are required.',
     input({
       orgUnitId: { type: ['string', 'number'], description: 'Organization unit identifier.' },
       ...pageProperties,
-      pageSize: { type: 'integer', minimum: 1, maximum: 1000, description: 'Positive active-issue page size from 1-1000.' },
+      pageSize: { type: 'integer', minimum: 1, maximum: 1000, description: 'Positive active-issue page size from 1-1000; defaults to 10 when omitted.' },
+      detailLevel: { type: 'string', enum: ['compact', 'full'], description: 'compact (default) removes the verbose _extra object; full returns complete issue records.' },
     }, ['orgUnitId']),
     ['GET /api/org-units/{orgUnitId}/active-issues'], listActiveIssues,
   ),
@@ -190,8 +212,17 @@ export const coreTools = Object.freeze([
   ),
   coreTool(
     'list_job_statuses',
-    'List asynchronous N-central job statuses for one organization unit.',
-    input({ orgUnitId: { type: ['string', 'number'], description: 'Organization unit identifier.' } }, ['orgUnitId']),
+    'List asynchronous N-central job statuses with local filtering, bounded pagination, and a compact default projection.',
+    input({
+      orgUnitId: { type: ['string', 'number'], description: 'Organization unit identifier.' },
+      pageNumber: { type: 'integer', minimum: 1, description: 'Local result page number; defaults to 1.' },
+      pageSize: { type: 'integer', minimum: 1, maximum: 100, description: 'Local result page size from 1-100; defaults to 25.' },
+      status: { type: 'string', minLength: 1, maxLength: 100, pattern: '.*\\S.*', description: 'Optional case-insensitive exact status filter.' },
+      deviceId: { type: ['string', 'number'], description: 'Optional exact device identifier filter.' },
+      jobId: { type: ['string', 'number'], description: 'Optional exact job identifier filter.' },
+      since: { type: 'string', format: 'date-time', description: 'Keep jobs scheduled or completed at or after this ISO 8601 timestamp.' },
+      detailLevel: { type: 'string', enum: ['compact', 'full'], description: 'compact (default) removes the unbounded _extra object; full retains complete rows.' },
+    }, ['orgUnitId']),
     ['GET /api/org-units/{orgUnitId}/job-statuses'], listJobStatuses,
   ),
 ]);

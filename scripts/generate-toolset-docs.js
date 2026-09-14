@@ -12,7 +12,7 @@ const lines = [
   'NC_TOOLSETS=core,reporting',
   'NC_WRITE_MODE=read-only',
   '```', '',
-  'Omitting both variables selects `core` and `read-only`. Valid write modes are `read-only`, `write`, and `full`; destructive tools appear only in `full`.', '',
+  'Omitting both variables selects `core` and `read-only`. `NC_TOOLSETS=all` expands to the five preferred v3 catalogs (`core`, `operations`, `administration`, `psa`, and `reporting`) and intentionally excludes `compatibility`; use `all,compatibility` only for legacy-name migration. Valid write modes are `read-only`, `write`, and `full`; destructive tools appear only in `full`.', '',
 ];
 for (const toolset of TOOLSET_NAMES) {
   const tools = resolveToolConfiguration({ rawToolsets: toolset, rawWriteMode: 'full' }).tools;

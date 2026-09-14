@@ -29,20 +29,9 @@ export function createMcpServer(tools) {
   const sensitiveTools = new Set(tools.filter(isSensitiveTool).map(({ name }) => name));
 
   for (const tool of tools) {
-    /** @type {Record<string, any>} */
-    const schemaShape = {};
-    const properties = tool.inputSchema.properties || {};
-    const required = tool.inputSchema.required || [];
-
-    for (const [key, property] of Object.entries(properties)) {
-      let zodProperty = jsonSchemaToZod(property);
-      if (!required.includes(key)) zodProperty = zodProperty.optional();
-      schemaShape[key] = zodProperty;
-    }
-
     server.registerTool(tool.name, {
       description: tool.description,
-      inputSchema: schemaShape,
+      inputSchema: jsonSchemaToZod(tool.inputSchema),
       outputSchema: jsonSchemaToZod(tool.outputSchema),
       annotations: buildToolAnnotations(tool),
     }, async (args) => {
@@ -59,6 +48,11 @@ export function createMcpServer(tools) {
         const durationMs = Date.now() - startedAt;
         auditLog('tool_call', { tool: tool.name, success: true, durationMs });
         inc('nc_mcp_tool_calls_total', { tool: tool.name, success: 'true' });
+        inc('nc_mcp_tool_duration_ms_total', { tool: tool.name, success: 'true' }, durationMs);
+        inc('nc_mcp_tool_response_bytes_total', { tool: tool.name, success: 'true' }, Buffer.byteLength(JSON.stringify(result), 'utf8'));
+        inc('nc_mcp_upstream_operations_total', { tool: tool.name }, result.structuredContent?.meta?.operations?.length || 0);
+        if (result.structuredContent?.meta?.partial) inc('nc_mcp_partial_results_total', { tool: tool.name });
+        if (result.structuredContent?.meta?.truncated) inc('nc_mcp_truncated_results_total', { tool: tool.name });
         return result;
       } catch (error) {
         const durationMs = Date.now() - startedAt;
@@ -68,10 +62,13 @@ export function createMcpServer(tools) {
           durationMs,
         });
         inc('nc_mcp_tool_calls_total', { tool: tool.name, success: 'false' });
-        return {
-          content: [{ type: 'text', text: `Error: ${sanitizeToolError(error?.message)}` }],
+        inc('nc_mcp_tool_duration_ms_total', { tool: tool.name, success: 'false' }, durationMs);
+        const result = {
+          content: [{ type: /** @type {const} */ ('text'), text: `Error: ${sanitizeToolError(error?.message)}` }],
           isError: true,
         };
+        inc('nc_mcp_tool_response_bytes_total', { tool: tool.name, success: 'false' }, Buffer.byteLength(JSON.stringify(result), 'utf8'));
+        return result;
       }
     });
   }

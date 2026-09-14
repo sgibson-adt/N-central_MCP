@@ -51,8 +51,38 @@ describe('monitoring, scheduled-task, and report adapters', () => {
       return null;
     } });
     const result = await withSyntheticTenant(syntheticTenant('user-report'), () => reportAllUsersByServiceOrg({ soId: 1 }));
-    assert.deepEqual(result.map(({ userId }) => userId), [10, 11, 12]);
-    assert.equal(result.some(Array.isArray), false);
+    assert.deepEqual(result.data.map(({ userId }) => userId), [10, 11, 12]);
+    assert.equal(result.data.some(Array.isArray), false);
+    assert.deepEqual({
+      detailLevel: result.detailLevel, pageNumber: result.pageNumber, pageSize: result.pageSize,
+      itemCount: result.itemCount, totalItems: result.totalItems, totalPages: result.totalPages,
+      hasNextPage: result.hasNextPage,
+    }, {
+      detailLevel: 'compact', pageNumber: 1, pageSize: 25,
+      itemCount: 3, totalItems: 3, totalPages: 1, hasNextPage: false,
+    });
+  });
+
+  it('pages compact users and retains full records only when requested', async () => {
+    boundary = installContractFetch({ responder(call) {
+      if (call.path === '/api/service-orgs/1/customers') return new Response(JSON.stringify({ data: [], totalPages: 1 }), { headers: { 'content-type': 'application/json' } });
+      if (call.path === '/api/org-units/1/users') return new Response(JSON.stringify({
+        data: [
+          { userId: 10, userName: 'one', _extra: { noisy: true } },
+          { userId: 11, userName: 'two', _extra: { noisy: true } },
+        ], totalPages: 1,
+      }), { headers: { 'content-type': 'application/json' } });
+      return null;
+    } });
+    const [compact, full] = await withSyntheticTenant(syntheticTenant('paged-user-report'), async () => [
+      await reportAllUsersByServiceOrg({ soId: 1, pageSize: 1 }),
+      await reportAllUsersByServiceOrg({ soId: 1, all: true, detailLevel: 'full' }),
+    ]);
+    assert.deepEqual(compact.data, [{ userId: 10, userName: 'one' }]);
+    assert.equal(compact.hasNextPage, true);
+    assert.equal(compact.totalItems, 2);
+    assert.equal(full.data[0]._extra.noisy, true);
+    assert.equal(full.pageSize, 2);
   });
 
   it('uses detail records for scoped customer/site and service-org hierarchy reports', async () => {

@@ -20,6 +20,14 @@ export const validToolsetVectors = Object.freeze([
   { raw: 'CORE, core', expected: ['core'] },
   { raw: 'core,psa', expected: ['core', 'psa'] },
   { raw: ' reporting , operations ', expected: ['operations', 'reporting'] },
+  {
+    raw: 'all',
+    expected: ['core', 'operations', 'administration', 'psa', 'reporting'],
+  },
+  {
+    raw: ' ALL, compatibility, core ',
+    expected: ['core', 'operations', 'administration', 'psa', 'reporting', 'compatibility'],
+  },
   { raw: 'compatibility', expected: ['compatibility'] },
 ]);
 

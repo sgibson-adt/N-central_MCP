@@ -383,6 +383,19 @@ describe('real curated registry parity', () => {
         arguments: { deviceId: '1', include: ['notes'], noteOptions: { pageSize: 0 } },
       });
       assert.equal(invalid.isError, true);
+      const unexpected = await client.callTool({
+        name: 'validate_session', arguments: { unexpected: true },
+      });
+      assert.equal(unexpected.isError, true);
+      const unfilteredOrganizations = await client.callTool({
+        name: 'search_organizations',
+        arguments: { organizationType: 'customer', pageNumber: 1, pageSize: 2 },
+      });
+      assert.equal(unfilteredOrganizations.isError, undefined);
+      const unfilteredDevices = await client.callTool({
+        name: 'search_devices', arguments: { pageNumber: 1, pageSize: 2 },
+      });
+      assert.equal(unfilteredDevices.isError, undefined);
       const result = await client.callTool({ name: 'validate_session', arguments: {} });
       assert.ok(result.structuredContent);
       assert.equal(result.isError, undefined);
